@@ -43,7 +43,7 @@ namespace SlideshowViewer
             this.pictureBox1.LowerLeftText = null;
             this.pictureBox1.LowerMiddleText = null;
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.OverlayAlpha = 200;
+            this.pictureBox1.OverlayAlpha = 220;
             this.pictureBox1.OverlayFont = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.pictureBox1.Size = new System.Drawing.Size(1285, 912);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;

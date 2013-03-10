@@ -37,7 +37,8 @@ namespace SlideshowViewer
                     {
                         if (_fileNames.RemoveAll(s => s==shownFile)>0)
                         {
-                            shownFiles.Add(shownFile);
+                            if (!shownFiles.Contains(shownFile))
+                                shownFiles.Add(shownFile);
                         }
                     }
                     if (_fileNames.Count == 0)

@@ -2,15 +2,23 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Timers;
 using System.Windows.Forms;
 using Timer = System.Timers.Timer;
 
 namespace SlideshowViewer
 {
+
+
     public partial class PictureViewerForm : Form
     {
-        private Timer _timer;
+        [DllImport("kernel32.dll")]
+        static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, int dwFlags);
+
+        private Timer _slideShowTimer;
+
+        private Timer _preLoadTimer;
 
         public PictureViewerForm()
         {
@@ -18,6 +26,22 @@ namespace SlideshowViewer
             Loop = false;
             OverlayTextTemplate = "{fullName}";
             InitializeComponent();
+            _preLoadTimer=new Timer(1000);
+            _preLoadTimer.SynchronizingObject = this;
+            _preLoadTimer.Elapsed+=PreLoadTimerOnElapsed;
+            _preLoadTimer.AutoReset = false;
+        }
+
+        private void PreLoadTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
+        {
+            for (int i = 0; i < Files.Count; i++)
+            {
+                var pictureFile = Files[i];
+                if (i < FileIndex - 3 || i > FileIndex + 3)
+                    pictureFile.UnloadImage();
+                if (i >= FileIndex - 1 && i <= FileIndex + 1)
+                    pictureFile.GetImage();
+            }
         }
 
         public List<PictureFile> Files { private get; set; }
@@ -59,21 +83,13 @@ namespace SlideshowViewer
             pictureBox1.HighQuality = imageDuration == 0;
             pictureBox1.Image = bitmap;
             pictureBox1.LowerLeftText = GetOverlayText(file, OverlayTextTemplate);
-            StopTimer();
+            StopSlideShowTimer();
             int interval = Math.Max(DelayInSec*1000, imageDuration + imageDuration/2);
             pictureBox1.LowerMiddleText = null;
-            StartTimer(interval);
+            StartSlideShowTimer(interval);
             RegisterFileForResume(file.FileName);
-            for (int i = 0; i < Files.Count; i++)
-            {
-                var pictureFile = Files[i];
-                if (i < FileIndex - 1 || i > FileIndex + 1)
-                    pictureFile.UnloadImage();
-                else
-                {
-                    pictureFile.GetImage();
-                }
-            }
+            _preLoadTimer.Stop();
+            _preLoadTimer.Start();
         }
 
         private string GetOverlayText(PictureFile file,string template)
@@ -88,54 +104,69 @@ namespace SlideshowViewer
             return template;
         }
 
-        private void StopTimer()
+        private void StopSlideShowTimer()
         {
-            if (_timer != null)
+            if (_slideShowTimer != null)
             {
-                _timer.Stop();
-                _timer.Dispose();
+                _slideShowTimer.Stop();
+                _slideShowTimer.Dispose();
             } 
         }
 
-        private void StartTimer(int interval)
+        private void StartSlideShowTimer(int interval)
         {
-            _timer = new Timer(interval);
-            _timer.Elapsed += TimerOnElapsed;
-            _timer.SynchronizingObject = this;
-            _timer.Start();
+            _slideShowTimer = new Timer(interval);
+            _slideShowTimer.Elapsed += SlideShowTimerOnElapsed;
+            _slideShowTimer.SynchronizingObject = this;
+            _slideShowTimer.Start();
         }
 
         protected override void OnKeyDown(KeyEventArgs e)
         {
-            if (e.KeyValue == (decimal) Keys.Right || e.KeyValue == (decimal) Keys.PageUp)
+            switch (e.KeyCode)
             {
-                NextPicture();
-            }
-            if (e.KeyValue == (decimal) Keys.Left || e.KeyValue == (decimal) Keys.PageDown)
-            {
-                PrevPicture();
-            }
-            if (e.KeyValue == (decimal) Keys.Escape)
-            {
-                Close();
-            }
-            if (e.KeyValue == (decimal) Keys.Space || e.KeyValue == (decimal) Keys.Enter)
-            {
-                Pause();
+                case Keys.Right:
+                case Keys.PageUp:
+                    NextPicture();
+                    break;
+                case Keys.Left:
+                case Keys.PageDown:
+                    PrevPicture();
+                    break;
+                case Keys.Escape:
+                    Close();
+                    break;
+                case Keys.Space:
+                case Keys.Enter:
+                    Pause();
+                    break;
             }
             base.OnKeyDown(e);
         }
 
+        protected override void OnKeyPress(KeyPressEventArgs e)
+        {
+            if (e.KeyChar >= '0' && e.KeyChar <= '9')
+                MarkFile(e.KeyChar - '0', Files[FileIndex]);
+            base.OnKeyPress(e);
+        }
+
+        private void MarkFile(int i, PictureFile pictureFile)
+        {
+            using (File.Create(pictureFile.FileName + ".ssv." + i)) { }
+            pictureBox1.LowerMiddleText = "MARKED " + i;
+        }
+
         private void Pause()
         {
-            if (_timer.Enabled)
+            if (_slideShowTimer.Enabled)
             {
-                _timer.Stop();
+                _slideShowTimer.Stop();
                 pictureBox1.LowerMiddleText = "PAUSED";
             }
             else
             {
-                _timer.Start();
+                _slideShowTimer.Start();
                 pictureBox1.LowerMiddleText = null;
             }
         }
@@ -176,9 +207,9 @@ namespace SlideshowViewer
             ShowPicture(FileIndex);
         }
 
-        private void TimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
+        private void SlideShowTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
         {
-            if (sender == _timer)
+            if (sender == _slideShowTimer)
                 NextPicture();
         }
 
