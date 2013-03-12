@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace SlideshowViewer
 {
@@ -18,6 +20,27 @@ namespace SlideshowViewer
             EqualityComparer<TValue> @default = EqualityComparer<TValue>.Default;
             return (from pair in dict where @default.Equals(pair.Value, value) select pair.Key).FirstOrDefault();
         }
-         
+
+        public static IEnumerable<string> SplitIntoLines(this string s)
+        {
+            using (var reader = new StringReader(s))
+            {
+                var line = reader.ReadLine();
+                while (line!=null)
+                {
+                    yield return line;
+                    line = reader.ReadLine();
+                }
+            }
+        }
+
+        public static bool MatchGlob(this string s, string pattern)
+        {
+            pattern = Regex.Escape(pattern);
+            pattern=pattern.Replace(@"\*", "[^/]*");
+            pattern=pattern.Replace(@"\?", "[^/]?");
+            return new Regex("^"+pattern+"$", RegexOptions.IgnoreCase).IsMatch(s);
+        }
+        
     }
 }

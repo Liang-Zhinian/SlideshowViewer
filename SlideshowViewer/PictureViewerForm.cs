@@ -5,20 +5,15 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Windows.Forms;
+using System.Linq;
 using Timer = System.Timers.Timer;
 
 namespace SlideshowViewer
 {
-
-
     public partial class PictureViewerForm : Form
     {
-        [DllImport("kernel32.dll")]
-        static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, int dwFlags);
-
+        private readonly Timer _preLoadTimer;
         private Timer _slideShowTimer;
-
-        private Timer _preLoadTimer;
 
         public PictureViewerForm()
         {
@@ -26,22 +21,10 @@ namespace SlideshowViewer
             Loop = false;
             OverlayTextTemplate = "{fullName}";
             InitializeComponent();
-            _preLoadTimer=new Timer(1000);
+            _preLoadTimer = new Timer(1000);
             _preLoadTimer.SynchronizingObject = this;
-            _preLoadTimer.Elapsed+=PreLoadTimerOnElapsed;
-            _preLoadTimer.AutoReset = false;
-        }
-
-        private void PreLoadTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
-        {
-            for (int i = 0; i < Files.Count; i++)
-            {
-                var pictureFile = Files[i];
-                if (i < FileIndex - 3 || i > FileIndex + 3)
-                    pictureFile.UnloadImage();
-                if (i >= FileIndex - 1 && i <= FileIndex + 1)
-                    pictureFile.GetImage();
-            }
+            _preLoadTimer.Elapsed += PreLoadTimerOnElapsed;
+            _preLoadTimer.AutoReset = false;            
         }
 
         public List<PictureFile> Files { private get; set; }
@@ -55,6 +38,21 @@ namespace SlideshowViewer
         public string OverlayTextTemplate { get; set; }
 
         public string ResumeFile { get; set; }
+
+        [DllImport("kernel32.dll")]
+        private static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, int dwFlags);
+
+        private void PreLoadTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
+        {
+            for (int i = 0; i < Files.Count; i++)
+            {
+                PictureFile pictureFile = Files[i];
+                if (i < FileIndex - 3 || i > FileIndex + 3)
+                    pictureFile.UnloadImage();
+                if (i >= FileIndex - 1 && i <= FileIndex + 1)
+                    pictureFile.GetImage();
+            }
+        }
 
         protected override void OnLoad(EventArgs e)
         {
@@ -75,8 +73,7 @@ namespace SlideshowViewer
 
         private void ShowPicture(int index)
         {
-            var file = Files[index];
-            pictureBox1.LowerMiddleText = "...";
+            PictureFile file = Files[index];
             Image bitmap = file.Image;
             int imageDuration = file.GetImageDuration();
 
@@ -92,16 +89,17 @@ namespace SlideshowViewer
             _preLoadTimer.Start();
         }
 
-        private string GetOverlayText(PictureFile file,string template)
+        private string GetOverlayText(PictureFile file, string template)
         {
             template = template.Replace("{eol}", "\n");
             template = template.Replace("{fullName}", file.FileName);
+            template = template.Replace("{imageDescription}", file.GetImageDescription());
             template = template.Replace("{description}", file.GetDescription());
             template = template.Replace("{dateTime}", file.GetDateTime());
             template = template.Replace("{model}", file.GetModel());
             template = template.Replace("{index}", (FileIndex + 1).ToString("n0"));
             template = template.Replace("{total}", Files.Count.ToString("n0"));
-            return template;
+            return string.Join("\n", template.SplitIntoLines().Where(s => s.Length > 0));
         }
 
         private void StopSlideShowTimer()
@@ -110,7 +108,7 @@ namespace SlideshowViewer
             {
                 _slideShowTimer.Stop();
                 _slideShowTimer.Dispose();
-            } 
+            }
         }
 
         private void StartSlideShowTimer(int interval)
@@ -151,9 +149,24 @@ namespace SlideshowViewer
             base.OnKeyPress(e);
         }
 
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            if (e.Delta > 0)
+            {
+                PrevPicture();                
+            }
+            else
+            {
+                NextPicture();
+            }
+            base.OnMouseWheel(e);
+        }
+
         private void MarkFile(int i, PictureFile pictureFile)
         {
-            using (File.Create(pictureFile.FileName + ".ssv." + i)) { }
+            using (File.Create(pictureFile.FileName + ".ssv." + i))
+            {
+            }
             pictureBox1.LowerMiddleText = "MARKED " + i;
         }
 
