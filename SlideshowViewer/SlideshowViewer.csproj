@@ -58,6 +58,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Design" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -68,12 +69,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Directory.cs" />
+    <Compile Include="DirectoryTree.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DirectoryTree.Designer.cs">
+      <DependentUpon>DirectoryTree.cs</DependentUpon>
+    </Compile>
     <Compile Include="FileAssociation.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="MyPictureBox.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="PictureFile.cs" />
+    <Compile Include="PictureViewer.cs" />
     <Compile Include="PictureViewerForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -82,12 +91,16 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ResumeManager.cs" />
     <Compile Include="SplashScreen.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="SplashScreen.Designer.cs">
       <DependentUpon>SplashScreen.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="DirectoryTree.resx">
+      <DependentUpon>DirectoryTree.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="PictureViewerForm.resx">
       <DependentUpon>PictureViewerForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -140,6 +153,12 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Resources\image-x-generic.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ObjectListView\ObjectListView2010.csproj">
+      <Project>{18FEDA0C-D147-4286-B39A-01204808106A}</Project>
+      <Name>ObjectListView2010</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

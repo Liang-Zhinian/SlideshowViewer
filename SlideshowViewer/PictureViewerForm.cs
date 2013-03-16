@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -14,6 +15,12 @@ namespace SlideshowViewer
     {
         private readonly Timer _preLoadTimer;
         private Timer _slideShowTimer;
+
+        public delegate void PictureShownDelegate(PictureFile file);
+        public delegate void AllPicturesShownDelegate(IEnumerable<PictureFile> file);
+
+        public PictureShownDelegate PictureShown { get; set; }
+        public AllPicturesShownDelegate AllPicturesShown { get; set; }
 
         public PictureViewerForm()
         {
@@ -37,8 +44,6 @@ namespace SlideshowViewer
 
         public string OverlayTextTemplate { get; set; }
 
-        public string ResumeFile { get; set; }
-
         [DllImport("kernel32.dll")]
         private static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, int dwFlags);
 
@@ -57,23 +62,42 @@ namespace SlideshowViewer
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-            ShowPictures();
-        }
-
-
-        public void ShowPictures()
-        {
-            ShowPicture(FileIndex);
             WindowState = FormWindowState.Normal;
             FormBorderStyle = FormBorderStyle.None;
             Bounds = Screen.PrimaryScreen.Bounds;
             pictureBox1.MouseEnter += (o, args) => Cursor.Hide();
             pictureBox1.MouseLeave += (o, args) => Cursor.Show();
+            ShowPicture();
         }
 
-        private void ShowPicture(int index)
+
+        private void ShowPicture()
         {
-            PictureFile file = Files[index];
+            if (FileIndex >= Files.Count)
+            {
+
+                if (Loop)
+                {
+                    FileIndex = 0;
+                }
+                else
+                {
+                    Close();
+                    return;
+                }
+            }
+            if (FileIndex < 0)
+            {
+                if (Loop)
+                    FileIndex = Files.Count - 1;
+                else
+                {
+                    Close();
+                    return;
+                }
+            }
+
+            PictureFile file = Files[FileIndex];
             Image bitmap = file.Image;
             int imageDuration = file.GetImageDuration();
 
@@ -84,9 +108,17 @@ namespace SlideshowViewer
             int interval = Math.Max(DelayInSec*1000, imageDuration + imageDuration/2);
             pictureBox1.LowerMiddleText = null;
             StartSlideShowTimer(interval);
-            RegisterFileForResume(file.FileName);
+            if (PictureShown != null)
+            {
+                PictureShown(file);
+            }
+            if (FileIndex == Files.Count - 1 && AllPicturesShown != null)
+            {
+                AllPicturesShown(Files);
+            }
             _preLoadTimer.Stop();
-            _preLoadTimer.Start();
+            if (!file.IsAnimatedGif())
+                _preLoadTimer.Start();
         }
 
         private string GetOverlayText(PictureFile file, string template)
@@ -108,6 +140,7 @@ namespace SlideshowViewer
             {
                 _slideShowTimer.Stop();
                 _slideShowTimer.Dispose();
+                _slideShowTimer = null;
             }
         }
 
@@ -187,37 +220,13 @@ namespace SlideshowViewer
         private void NextPicture()
         {
             FileIndex++;
-            if (FileIndex >= Files.Count)
-            {
-                if (Loop)
-                {
-                    if (ResumeFile != null)
-                        File.Delete(ResumeFile);
-                    FileIndex = 0;
-                }
-                else
-                {
-                    Close();
-                    return;
-                }
-            }
-            ShowPicture(FileIndex);
+            ShowPicture();
         }
 
         private void PrevPicture()
         {
             FileIndex--;
-            if (FileIndex < 0)
-            {
-                if (Loop)
-                    FileIndex = Files.Count - 1;
-                else
-                {
-                    Close();
-                    return;
-                }
-            }
-            ShowPicture(FileIndex);
+            ShowPicture();
         }
 
         private void SlideShowTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
@@ -226,10 +235,15 @@ namespace SlideshowViewer
                 NextPicture();
         }
 
-        private void RegisterFileForResume(string fileName)
+        protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            if (ResumeFile != null)
-                File.AppendAllLines(ResumeFile, new[] {fileName});
+            base.OnFormClosed(e);
+            StopSlideShowTimer();
+            foreach (PictureFile pictureFile in Files)
+            {
+                pictureFile.UnloadImage();
+            }            
+
         }
     }
 }

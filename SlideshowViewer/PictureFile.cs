@@ -12,23 +12,34 @@ namespace SlideshowViewer
 {
     public class PictureFile
     {
-        private readonly string _fileName;
+        private readonly FileInfo _fileInfo;
         private Image _image;
         private ExifReader _exifReader;
+        private bool? _animatedGif;
 
-        public PictureFile(string fileName)
+        public PictureFile(FileInfo fileInfo)
         {
-            _fileName = fileName;
+            _fileInfo = fileInfo;
         }
 
         public string FileName
         {
-            get { return _fileName; }
+            get { return _fileInfo.FullName; }
         }
 
         public Image Image
         {
             get { return GetImage(); }
+        }
+
+        public long FileSize
+        {
+            get { return _fileInfo.Length; }
+        }
+
+        public object ModifiedDate
+        {
+            get { return _fileInfo.LastWriteTime; }
         }
 
 
@@ -49,7 +60,7 @@ namespace SlideshowViewer
         {
             if (_exifReader == null)
             {
-                _exifReader = new ExifReader(_fileName);
+                _exifReader = new ExifReader(FileName);
             }
             return _exifReader;
         }
@@ -94,22 +105,28 @@ namespace SlideshowViewer
 
         public string GetDescription()
         {
-            string directoryName = Path.GetDirectoryName(_fileName);
-            string name = Path.GetFileName(_fileName);
-            Debug.Assert(directoryName != null, "directoryName != null");
-            string descriptionFileName = Path.Combine(directoryName, ".description");
-            if (File.Exists(descriptionFileName))
+            try
             {
-                foreach (string line in File.ReadLines(descriptionFileName, Encoding.GetEncoding(0)))
+                string directoryName = _fileInfo.DirectoryName;
+                string name = _fileInfo.Name;
+                string descriptionFileName = Path.Combine(directoryName, ".description");
+                if (File.Exists(descriptionFileName))
                 {
-                    string[] split = line.Split(new[] {'='}, 2);
-                    if (split.Length == 2 && split[0] == name)
+                    foreach (string line in File.ReadLines(descriptionFileName, Encoding.GetEncoding(0)))
                     {
-                        return split[1];
+                        string[] split = line.Split(new[] {'='}, 2);
+                        if (split.Length == 2 && split[0] == name)
+                        {
+                            return split[1];
+                        }
                     }
                 }
+                return "";
             }
-            return "";
+            catch (Exception e)
+            {
+                return "Error reading .description: " + e.Message;
+            }
         }
 
         public Image GetImage()
@@ -117,7 +134,7 @@ namespace SlideshowViewer
             if (_image == null)
                 try
                 {
-                    _image = new Bitmap(_fileName);
+                    _image = new Bitmap(FileName);
 /*
 1 = Horizontal (normal) 
 2 = Mirror horizontal 
@@ -167,7 +184,7 @@ namespace SlideshowViewer
                         graphics.SmoothingMode = SmoothingMode.AntiAlias;
                         graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
                         graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                        graphics.DrawString("Error loading image: " + _fileName + "\n" + e.Message,
+                        graphics.DrawString("Error loading image: " + FileName + "\n" + e.Message,
                                             new Font("Thaoma", 30), Brushes.OrangeRed, _image.GetBounds(ref pageUnit),
                                             format);
                     }
@@ -194,7 +211,7 @@ namespace SlideshowViewer
         public int GetImageDuration()
         {
             int imageDuration = 0;
-            if (IsAnimatedGif(Image))
+            if (IsAnimatedGif())
             {
                 int frameCount = Image.GetFrameCount(FrameDimension.Time);
                 if (frameCount > 1)
@@ -212,9 +229,11 @@ namespace SlideshowViewer
             return imageDuration;
         }
 
-        private bool IsAnimatedGif(Image bitmap)
+        public bool IsAnimatedGif()
         {
-            return bitmap.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
+            if (_animatedGif==null)
+                _animatedGif=Image.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
+            return (bool) _animatedGif;
         }
     }
 }

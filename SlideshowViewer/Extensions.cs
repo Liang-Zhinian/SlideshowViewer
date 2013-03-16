@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -41,6 +42,46 @@ namespace SlideshowViewer
             pattern=pattern.Replace(@"\?", "[^/]?");
             return new Regex("^"+pattern+"$", RegexOptions.IgnoreCase).IsMatch(s);
         }
-        
+
+        public static bool StartsWith<T>(this List<T> l, List<T> start)
+        {
+            EqualityComparer<T> @default = EqualityComparer<T>.Default;
+            if (l.Count < start.Count)
+                return false;
+            for (int i = 0; i < start.Count; i++)
+            {
+                if (!@default.Equals(l[i],start[i]))
+                    return false;
+            }
+            return true;
+        }
+
+        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> items)
+        {
+            var ret = new SortedDictionary<double, T>();
+            var r = new Random();
+            foreach (var item in items)
+            {
+                while (true)
+                {
+                    var key = r.NextDouble();
+                    try
+                    {
+                        ret.Add(key, item);
+                        break;
+                    }
+                    catch (ArgumentException e)
+                    {
+                    }
+                }
+            }
+            return ret.Values;
+        }
+
+        public static List<T> GetRange<T>(this List<T> l, int index)
+        {
+            return l.GetRange(index, l.Count - index);
+        }
+
     }
 }
