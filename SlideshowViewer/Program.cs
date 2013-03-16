@@ -13,7 +13,6 @@ namespace SlideshowViewer
     internal static class Program
     {
         private static IEnumerable<string> _filenamepatterns;
-        private static PictureViewer _pictureViewer;
         private static DirectoryTree _directoryTree;
 
         /// <summary>
@@ -30,8 +29,7 @@ namespace SlideshowViewer
                 splashScreen.Icon = Resources.image_x_generic;
                 splashScreen.Show();
                 Application.DoEvents();
-                _pictureViewer=new PictureViewer();
-                _directoryTree=new DirectoryTree(_pictureViewer);
+                _directoryTree=new DirectoryTree();
                 AddToFolderContextMenu();
                 _filenamepatterns =
                     ImageCodecInfo.GetImageEncoders().SelectMany(info => info.FilenameExtension.Split(';'));
@@ -48,14 +46,6 @@ namespace SlideshowViewer
             }
         }
 
-        private static void FilesSelected(IEnumerable<PictureFile> files)
-        {
-            _directoryTree.BeginInvoke(new MethodInvoker(delegate
-                {
-                    new PictureViewer().ShowPictures(files);
-
-                }));
-        }
 
         private static void AddToFolderContextMenu()
         {
@@ -106,7 +96,7 @@ namespace SlideshowViewer
 # text={2}
 # delay={3}
 # minSize={4}
-", _pictureViewer.Loop, _pictureViewer.Shuffle, _pictureViewer.Text, _pictureViewer.DelayInSec, _directoryTree.MinFileSize);
+", _directoryTree.Loop, _directoryTree.Shuffle, _directoryTree.Text, _directoryTree.DelayInSec, _directoryTree.MinFileSize);
                 }
             ReadConfiguration(File.ReadLines(defaultConfig));
         }
@@ -128,10 +118,10 @@ namespace SlideshowViewer
                     switch (cmd)
                     {
                         case "delay":
-                            _pictureViewer.DelayInSec = Convert.ToInt32(value);
+                            _directoryTree.DelayInSec = Convert.ToInt32(value);
                             break;
                         case "loop":
-                            _pictureViewer.Loop = Convert.ToBoolean(value);
+                            _directoryTree.Loop = Convert.ToBoolean(value);
                             break;
                         case "file":
                             _directoryTree.AddFile(new PictureFile(new FileInfo(value)));
@@ -144,17 +134,17 @@ namespace SlideshowViewer
                             AddFolder(value);
                             break;
                         case "text":
-                            _pictureViewer.Text = value;
+                            _directoryTree.Text = value;
                             break;
                         case "shuffle":
-                            _pictureViewer.Shuffle = Convert.ToBoolean(value);
+                            _directoryTree.Shuffle = Convert.ToBoolean(value);
                             break;
                         case "autorun":
                             _directoryTree.AutoRun = Convert.ToBoolean(value);
                             break;
                         case "resumefile":
                         case "resume":
-                            _pictureViewer.ResumeManager = new FileResumeManager(value);
+                            _directoryTree.ResumeManager = new FileResumeManager(value);
                             break;
                         case "minSize":
                             _directoryTree.MinFileSize = Convert.ToInt64(value);

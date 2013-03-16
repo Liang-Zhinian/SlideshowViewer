@@ -31,14 +31,20 @@ namespace SlideshowViewer
             _preLoadTimer = new Timer(1000);
             _preLoadTimer.SynchronizingObject = this;
             _preLoadTimer.Elapsed += PreLoadTimerOnElapsed;
-            _preLoadTimer.AutoReset = false;            
+            _preLoadTimer.AutoReset = false;
+
+            WindowState = FormWindowState.Normal;
+            FormBorderStyle = FormBorderStyle.None;
+            Bounds = Screen.PrimaryScreen.Bounds;
+            pictureBox1.MouseEnter += (o, args) => Cursor.Hide();
+            pictureBox1.MouseLeave += (o, args) => Cursor.Show();
         }
 
         public List<PictureFile> Files { private get; set; }
 
         public int FileIndex { get; set; }
 
-        public int DelayInSec { get; set; }
+        public decimal DelayInSec { get; set; }
 
         public bool Loop { get; set; }
 
@@ -59,14 +65,9 @@ namespace SlideshowViewer
             }
         }
 
-        protected override void OnLoad(EventArgs e)
+        protected override void OnShown(EventArgs e)
         {
-            base.OnLoad(e);
-            WindowState = FormWindowState.Normal;
-            FormBorderStyle = FormBorderStyle.None;
-            Bounds = Screen.PrimaryScreen.Bounds;
-            pictureBox1.MouseEnter += (o, args) => Cursor.Hide();
-            pictureBox1.MouseLeave += (o, args) => Cursor.Show();
+            base.OnShown(e);
             ShowPicture();
         }
 
@@ -105,7 +106,7 @@ namespace SlideshowViewer
             pictureBox1.Image = bitmap;
             pictureBox1.LowerLeftText = GetOverlayText(file, OverlayTextTemplate);
             StopSlideShowTimer();
-            int interval = Math.Max(DelayInSec*1000, imageDuration + imageDuration/2);
+            decimal interval = Math.Max(DelayInSec*1000, imageDuration + imageDuration/2);
             pictureBox1.LowerMiddleText = null;
             StartSlideShowTimer(interval);
             if (PictureShown != null)
@@ -144,9 +145,9 @@ namespace SlideshowViewer
             }
         }
 
-        private void StartSlideShowTimer(int interval)
+        private void StartSlideShowTimer(decimal interval)
         {
-            _slideShowTimer = new Timer(interval);
+            _slideShowTimer = new Timer((double) interval);
             _slideShowTimer.Elapsed += SlideShowTimerOnElapsed;
             _slideShowTimer.SynchronizingObject = this;
             _slideShowTimer.Start();

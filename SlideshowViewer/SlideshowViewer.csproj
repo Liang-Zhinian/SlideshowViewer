@@ -69,7 +69,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Directory.cs" />
+    <Compile Include="DirectoryFileGroup.cs" />
     <Compile Include="DirectoryTree.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -82,7 +82,6 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="PictureFile.cs" />
-    <Compile Include="PictureViewer.cs" />
     <Compile Include="PictureViewerForm.cs">
       <SubType>Form</SubType>
     </Compile>

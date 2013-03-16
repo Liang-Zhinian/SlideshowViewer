@@ -8,25 +8,30 @@ namespace SlideshowViewer
 {
     public partial class DirectoryTree : Form
     {
-        private readonly PictureViewer _pictureViewer;
         private decimal _minFileSize;
+        private decimal _modifiedAfter;
 
-        public DirectoryTree(PictureViewer pictureViewer)
+        public DirectoryTree()
         {
-            _pictureViewer = pictureViewer;
             Icon = Resources.image_x_generic;
             InitializeComponent();
+
+            ResumeManager = new DummyResumeManager();
+            Shuffle = false;
+            Loop = true;
+            DelayInSec = 15;
+            Text =
+                "{imageDescription}{eol}{description}{eol}{dateTime}{eol}{model}{eol}{fullName}  ( {index} / {total} )";
 
             AutoRun = true;
 
 
-            directoryTreeView.CanExpandGetter = Directory.CanExpandGetter;
-            directoryTreeView.ChildrenGetter = Directory.ChildrenGetter;
+            directoryTreeView.CanExpandGetter = FileGroup.CanExpandGetter;
+            directoryTreeView.ChildrenGetter = FileGroup.ChildrenGetter;
             directoryTreeView.ItemActivate += DirectoryTreeViewOnItemActivate;
             directoryTreeView.KeyPress +=
                 delegate(object sender, KeyPressEventArgs args) { args.Handled = args.KeyChar == '\r'; };
-            Directory.AcceptFile = AcceptFile;
-            Total.AspectGetter = rowObject => ((Directory) rowObject).GetNumberOfFiles();
+            Total.AspectGetter = rowObject => ((FileGroup) rowObject).GetNumberOfFiles();
             minSize.ValueChanged += MinSizeOnValueChanged;
             minSizeSuffix.SelectedValueChanged += MinSizeOnValueChanged;
             minSizeSuffix.Items.Clear();
@@ -49,15 +54,132 @@ namespace SlideshowViewer
             modifiedAfter.ValueChanged += ModifiedAfterSuffixOnSelectedValueChanged;
         }
 
-        protected decimal ModifiedAfter { get; set; }
+        public ResumeManager ResumeManager { get; set; }
+
+        public bool Shuffle
+        {
+            get { return shuffle.Checked; }
+            set { shuffle.Checked = value; }
+        }
+
+        public bool Loop
+        {
+            get { return loop.Checked; }
+            set { loop.Checked = value; }
+        }
+
+        public decimal DelayInSec
+        {
+            get { return delay.Value; }
+            set { delay.Value = value; }
+        }
+
+        public string Text { get; set; }
+
+        protected decimal ModifiedAfter
+        {
+            get { return _modifiedAfter; }
+            set
+            {
+                _modifiedAfter = value;
+                UpdateFilter();
+            }
+        }
 
         public decimal MinFileSize
         {
             get { return _minFileSize; }
-            set { _minFileSize = value; }
+            set
+            {
+                _minFileSize = value;
+                UpdateFilter();
+            }
         }
 
         public bool AutoRun { get; set; }
+
+
+        public void ShowPictures(IEnumerable<PictureFile> files)
+        {
+            List<PictureFile> pictureFiles;
+            int index = PrepareFileList(files, out pictureFiles);
+
+            using (PictureViewerForm pictureViewerForm = CreatePictureViewForm(pictureFiles, index))
+            {
+                pictureViewerForm.ShowDialog();
+            }
+        }
+
+        private int PrepareFileList(IEnumerable<PictureFile> files, out List<PictureFile> pictureFiles)
+        {
+            var shownFiles = new List<PictureFile>();
+            var notShownFiles = new List<PictureFile>();
+
+            foreach (PictureFile file in files)
+            {
+                if (ResumeManager.IsShown(file))
+                    shownFiles.Add(file);
+                else
+                    notShownFiles.Add(file);
+            }
+
+            if (notShownFiles.Count == 0)
+            {
+                ResumeManager.SetToNotShown(shownFiles);
+                notShownFiles = shownFiles;
+                shownFiles = new List<PictureFile>();
+            }
+
+            pictureFiles = new List<PictureFile>();
+            if (Shuffle)
+            {
+                pictureFiles.AddRange(shownFiles.Shuffle());
+                pictureFiles.AddRange(notShownFiles.Shuffle());
+            }
+            else
+            {
+                pictureFiles.AddRange(shownFiles);
+                pictureFiles.AddRange(notShownFiles);
+            }
+            return shownFiles.Count;
+        }
+
+
+        private PictureViewerForm CreatePictureViewForm(List<PictureFile> pictureFiles, int fileIndex)
+        {
+            var pictureViewerForm = new PictureViewerForm();
+            pictureViewerForm.Files = pictureFiles;
+            pictureViewerForm.FileIndex = fileIndex;
+            pictureViewerForm.Loop = Loop;
+            pictureViewerForm.DelayInSec = DelayInSec;
+            pictureViewerForm.OverlayTextTemplate = Text;
+            pictureViewerForm.Icon = Resources.image_x_generic;
+            pictureViewerForm.PictureShown = ResumeManager.SetToShown;
+            pictureViewerForm.AllPicturesShown = ResumeManager.SetToNotShown;
+            return pictureViewerForm;
+        }
+
+
+        private void UpdateFilter()
+        {
+            decimal minFileSize = MinFileSize;
+            decimal modifiedAfter = ModifiedAfter;
+            Func<PictureFile, bool> filter = delegate(PictureFile file)
+                {
+                    if (file.FileSize < minFileSize)
+                        return false;
+
+                    if (modifiedAfter > 0 &&
+                        DateTime.Now.AddSeconds((double) (0 - modifiedAfter)).CompareTo(file.ModifiedDate) > 0)
+                        return false;
+
+                    return true;
+                };
+            foreach (object o in directoryTreeView.Objects)
+            {
+                ((FileGroup) o).Filter = filter;
+            }
+        }
 
         private void ModifiedAfterSuffixOnSelectedValueChanged(object sender, EventArgs eventArgs)
         {
@@ -68,8 +190,9 @@ namespace SlideshowViewer
         private void RefreshTree()
         {
             directoryTreeView.RebuildAll(true);
+            directoryTreeView.Sort();
             Total.AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
-            Total.Width += 20;
+            Total.Width = Math.Max(20+Total.Width,100);
         }
 
         private void MinSizeOnValueChanged(object sender, EventArgs eventArgs)
@@ -77,19 +200,6 @@ namespace SlideshowViewer
             MinFileSize = minSize.Value*((LabelledInt) minSizeSuffix.SelectedItem).Value;
             RefreshTree();
         }
-
-        private bool AcceptFile(PictureFile file)
-        {
-            if (file.FileSize < MinFileSize)
-                return false;
-
-            if (ModifiedAfter > 0 &&
-                DateTime.Now.AddSeconds((double) (0 - ModifiedAfter)).CompareTo(file.ModifiedDate) > 0)
-                return false;
-
-            return true;
-        }
-
 
         protected override void OnShown(EventArgs e)
         {
@@ -104,24 +214,20 @@ namespace SlideshowViewer
                     break;
                 }
             }
+            UpdateFilter();
             if (AutoRun)
             {
                 ShowPictures(
-                    directoryTreeView.Objects.Cast<Directory>().SelectMany(directory => directory.GetFilesRecursive()));
+                    directoryTreeView.Objects.Cast<FileGroup>().SelectMany(directory => directory.GetFilesRecursive()));
             }
             RefreshTree();
-        }
-
-        private void ShowPictures(IEnumerable<PictureFile> pictureFiles)
-        {
-            _pictureViewer.ShowPictures(pictureFiles);
         }
 
 
         private IEnumerable<PictureFile> GetSelectedFiles()
         {
             return
-                directoryTreeView.SelectedObjects.Cast<Directory>()
+                directoryTreeView.SelectedObjects.Cast<FileGroup>()
                                  .SelectMany(directory => directory.GetFilesRecursive());
         }
 
@@ -133,14 +239,14 @@ namespace SlideshowViewer
 
         public void AddBaseDir(string baseDir)
         {
-            directoryTreeView.AddObject(new Directory(baseDir));
+            directoryTreeView.AddObject(new DirectoryFileGroup(baseDir));
         }
 
         public void AddFile(PictureFile file)
         {
             foreach (object o in directoryTreeView.Objects)
             {
-                if (((Directory) o).AddFile(file))
+                if (((FileGroup) o).AddFile(file))
                     return;
             }
         }
