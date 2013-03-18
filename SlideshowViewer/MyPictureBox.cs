@@ -23,7 +23,6 @@ namespace SlideshowViewer
             {
                 _lowerMiddleText = value;
                 Invalidate();
-                Update();
             }
         }
 

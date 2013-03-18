@@ -6,19 +6,20 @@ using System.Linq;
 
 namespace SlideshowViewer
 {
-    internal abstract class FileGroup
+    public class FileGroup
     {
         protected readonly List<PictureFile> _files = new List<PictureFile>();
-        protected readonly List<FileGroup> _groups = new List<FileGroup>();
+        private readonly List<FileGroup> _groups = new List<FileGroup>();
         private Func<PictureFile, bool> _filter = file => true;
         private long? _numberOfFilesFiltered;
+
 
         public FileGroup(string name)
         {
             Name = name;
         }
 
-        public string Name { get; private set; }
+        public virtual string Name { get; private set; }
 
         public Func<PictureFile, bool> Filter
         {
@@ -27,21 +28,35 @@ namespace SlideshowViewer
             {
                 _filter = value;
                 _numberOfFilesFiltered = null;
-                foreach (FileGroup fileGroup in _groups)
+                foreach (FileGroup fileGroup in GetGroups())
                 {
                     fileGroup.Filter = _filter;
                 }
             }
         }
 
-        public abstract bool AddFile(PictureFile file);
-
-        public IEnumerable<FileGroup> GetNonEmptyGroups()
+        protected virtual IEnumerable<FileGroup> GetGroups()
         {
-            return _groups.Where(fileGroup => fileGroup.GetNumberOfFiles() > 0);
+            return _groups;
         }
 
-        public bool HasNonEmptyGroups()
+        protected void AddGroup(FileGroup fileGroup)
+        {
+            _groups.Add(fileGroup);
+        }
+
+        public virtual bool AddFile(PictureFile file)
+        {
+            _files.Add(file);
+            return true;
+        }
+
+        public virtual IEnumerable<FileGroup> GetNonEmptyGroups()
+        {
+            return GetGroups().Where(fileGroup => fileGroup.GetNumberOfFiles() > 0);
+        }
+
+        public virtual bool HasNonEmptyGroups()
         {
             return GetNonEmptyGroups().Any();
         }
@@ -59,8 +74,9 @@ namespace SlideshowViewer
 
         public IEnumerable<PictureFile> GetFilesRecursive()
         {
-            foreach (PictureFile pictureFile in GetFiles()) yield return pictureFile;
-            foreach (FileGroup fileGroup in _groups)
+            foreach (PictureFile pictureFile in GetFiles()) 
+                yield return pictureFile;
+            foreach (FileGroup fileGroup in GetGroups())
             {
                 foreach (PictureFile pictureFile in fileGroup.GetFilesRecursive())
                 {
@@ -78,12 +94,67 @@ namespace SlideshowViewer
         {
             if (_numberOfFilesFiltered == null)
                 _numberOfFilesFiltered = GetFiles().Count() +
-                                         _groups.Sum(fileGroup => fileGroup.GetNumberOfFiles());
+                                         GetGroups().Sum(fileGroup => fileGroup.GetNumberOfFiles());
             return (long) _numberOfFilesFiltered;
         }
     }
 
 
+    internal class RootFileGroup : FileGroup
+    {
+        private FileGroup _restGroup;
+
+        public RootFileGroup() : base("All files")
+        {
+        }
+
+        public override string Name
+        {
+            get { return GetGroups().Count() == 1 ? GetGroups().First().Name : base.Name; }
+        }
+
+        private FileGroup GetRestGroup()
+        {
+            if (_restGroup == null)
+                _restGroup = new FileGroup("Manually added files");
+            return _restGroup;
+        }
+
+        protected override IEnumerable<FileGroup> GetGroups()
+        {
+            foreach (FileGroup fileGroup in base.GetGroups())
+            {
+                yield return fileGroup;
+            }
+            if (_restGroup != null)
+                yield return _restGroup;
+        }
+
+        public override bool AddFile(PictureFile file)
+        {
+            foreach (FileGroup fileGroup in GetGroups())
+            {
+                if (fileGroup.AddFile(file))
+                    return true;
+            }
+            return GetRestGroup().AddFile(file);
+        }
+
+        public void AddBaseDir(string directory)
+        {
+            AddGroup(new DirectoryFileGroup(directory));
+        }
+
+        public override IEnumerable<FileGroup> GetNonEmptyGroups()
+        {
+            return GetGroups().Count() == 1 ? GetGroups().First().GetNonEmptyGroups() : base.GetNonEmptyGroups();
+        }
+
+        public override bool HasNonEmptyGroups()
+        {
+            return GetGroups().Count() == 1 ? GetGroups().First().HasNonEmptyGroups() : base.HasNonEmptyGroups();
+        }
+    }
 
 
     internal class DirectoryFileGroup : FileGroup
@@ -113,7 +184,7 @@ namespace SlideshowViewer
         {
             if (parts.Count == 1)
             {
-                _files.Add(file);
+                base.AddFile(file);
             }
             else
             {
@@ -124,11 +195,11 @@ namespace SlideshowViewer
 
         private DirectoryFileGroup GetOrCreateDirectory(string name)
         {
-            DirectoryFileGroup dir = (DirectoryFileGroup) _groups.Find(directory => directory.Name == name);
+            var dir = (DirectoryFileGroup) GetGroups().FirstOrDefault(directory => directory.Name == name);
             if (dir != null)
                 return dir;
             dir = new DirectoryFileGroup(name);
-            _groups.Add(dir);
+            AddGroup(dir);
             return dir;
         }
 

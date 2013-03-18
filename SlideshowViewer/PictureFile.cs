@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -13,9 +12,9 @@ namespace SlideshowViewer
     public class PictureFile
     {
         private readonly FileInfo _fileInfo;
-        private Image _image;
-        private ExifReader _exifReader;
         private bool? _animatedGif;
+        private ExifReader _exifReader;
+        private Image _image;
 
         public PictureFile(FileInfo fileInfo)
         {
@@ -74,10 +73,10 @@ namespace SlideshowViewer
                     return @default;
                 return ret;
             }
-            catch (ExifLibException)
+            catch (Exception)
             {
                 return @default;
-            }            
+            }
         }
 
         public string GetDateTime()
@@ -97,7 +96,7 @@ namespace SlideshowViewer
 
         public string GetImageDescription()
         {
-            var imageDescription = GetTagValue(ExifTags.ImageDescription, "").Trim();
+            string imageDescription = GetTagValue(ExifTags.ImageDescription, "").Trim();
             if (imageDescription.EndsWith("DIGITAL CAMERA"))
                 return "";
             return imageDescription;
@@ -202,7 +201,7 @@ namespace SlideshowViewer
             if (_image != null)
                 _image.Dispose();
             _image = null;
-            if (_exifReader!=null)
+            if (_exifReader != null)
                 _exifReader.Dispose();
             _exifReader = null;
         }
@@ -231,9 +230,20 @@ namespace SlideshowViewer
 
         public bool IsAnimatedGif()
         {
-            if (_animatedGif==null)
-                _animatedGif=Image.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
+            if (_animatedGif == null)
+                _animatedGif = Image.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
             return (bool) _animatedGif;
         }
+
+        public void RotateLeft()
+        {
+            GetImage().RotateFlip(RotateFlipType.Rotate270FlipNone);
+        }
+
+        public void RotateRight()
+        {
+            GetImage().RotateFlip(RotateFlipType.Rotate90FlipNone);
+        }
+
     }
 }

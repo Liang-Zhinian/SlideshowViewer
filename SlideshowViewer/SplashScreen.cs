@@ -15,12 +15,21 @@ namespace SlideshowViewer
         public SplashScreen()
         {
             InitializeComponent();
+            WindowState = FormWindowState.Normal;
+            FormBorderStyle = FormBorderStyle.None;
+            var graphicsUnit = GraphicsUnit.Display;
+            Bounds = Rectangle.Truncate(BackgroundImage.GetBounds(ref graphicsUnit));
+            this.StartPosition = FormStartPosition.CenterScreen;
+            Cursor=Cursors.AppStarting;
         }
 
         private void SplashScreen_Load(object sender, EventArgs e)
         {
-            WindowState=FormWindowState.Normal;
-            FormBorderStyle=FormBorderStyle.None;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }

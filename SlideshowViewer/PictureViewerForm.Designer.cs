@@ -57,7 +57,7 @@ namespace SlideshowViewer
             this.ClientSize = new System.Drawing.Size(1285, 912);
             this.Controls.Add(this.pictureBox1);
             this.Name = "PictureViewerForm";
-            this.Text = "Slideshow Viewer";
+            this.Text = "Slideshow Viewer - Showing pictures";
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
 
@@ -65,7 +65,8 @@ namespace SlideshowViewer
 
         #endregion
 
-        private MyPictureBox pictureBox1;
+        internal MyPictureBox pictureBox1;
+
     }
 }
 

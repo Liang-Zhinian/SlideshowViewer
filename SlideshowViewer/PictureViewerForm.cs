@@ -1,31 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Timers;
 using System.Windows.Forms;
-using System.Linq;
 using Timer = System.Timers.Timer;
 
 namespace SlideshowViewer
 {
     public partial class PictureViewerForm : Form
     {
-        private readonly Timer _preLoadTimer;
-        private Timer _slideShowTimer;
-
-        public delegate void PictureShownDelegate(PictureFile file);
         public delegate void AllPicturesShownDelegate(IEnumerable<PictureFile> file);
 
-        public PictureShownDelegate PictureShown { get; set; }
-        public AllPicturesShownDelegate AllPicturesShown { get; set; }
+        public delegate void PictureShownDelegate(PictureFile file);
+
+        private readonly Timer _preLoadTimer;
+        private Timer _slideShowTimer;
 
         public PictureViewerForm()
         {
             DelayInSec = 15;
             Loop = false;
+            Paused = false;
+            ShowInfo = true;
             OverlayTextTemplate = "{fullName}";
             InitializeComponent();
             _preLoadTimer = new Timer(1000);
@@ -40,7 +39,10 @@ namespace SlideshowViewer
             pictureBox1.MouseLeave += (o, args) => Cursor.Show();
         }
 
-        public List<PictureFile> Files { private get; set; }
+        public PictureShownDelegate PictureShown { get; set; }
+        public AllPicturesShownDelegate AllPicturesShown { get; set; }
+
+        public List<PictureFile> Files { get; set; }
 
         public int FileIndex { get; set; }
 
@@ -49,6 +51,14 @@ namespace SlideshowViewer
         public bool Loop { get; set; }
 
         public string OverlayTextTemplate { get; set; }
+
+        public Action<PictureFile> ToggleBrowsing { get; set; }
+
+        public bool Browsing { get; set; }
+
+        private bool Paused { get; set; }
+
+        private bool ShowInfo { get; set; }
 
         [DllImport("kernel32.dll")]
         private static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, int dwFlags);
@@ -65,18 +75,11 @@ namespace SlideshowViewer
             }
         }
 
-        protected override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-            ShowPicture();
-        }
 
-
-        private void ShowPicture()
+        internal void ShowPicture()
         {
             if (FileIndex >= Files.Count)
             {
-
                 if (Loop)
                 {
                     FileIndex = 0;
@@ -104,18 +107,47 @@ namespace SlideshowViewer
 
             pictureBox1.HighQuality = imageDuration == 0;
             pictureBox1.Image = bitmap;
-            pictureBox1.LowerLeftText = GetOverlayText(file, OverlayTextTemplate);
+            string lowerMiddleText = null;
+            string lowerLeftText = null;
+            
+            lowerLeftText = GetOverlayText(file, OverlayTextTemplate);
+
             StopSlideShowTimer();
             decimal interval = Math.Max(DelayInSec*1000, imageDuration + imageDuration/2);
-            pictureBox1.LowerMiddleText = null;
-            StartSlideShowTimer(interval);
-            if (PictureShown != null)
+            if (interval == 0)
+                interval = 1;
+            if (!Browsing)
             {
-                PictureShown(file);
+                if (!Paused)
+                {
+                    StartSlideShowTimer(interval);
+                }
+                else
+                {
+                    lowerMiddleText = "PAUSED";
+                }
+                if (PictureShown != null)
+                {
+                    PictureShown(file);
+                }
+                if (FileIndex == Files.Count - 1 && AllPicturesShown != null)
+                {
+                    AllPicturesShown(Files);
+                }
             }
-            if (FileIndex == Files.Count - 1 && AllPicturesShown != null)
+            else
             {
-                AllPicturesShown(Files);
+                lowerMiddleText = "BROWSING";
+            }
+            if (!ShowInfo)
+            {
+                pictureBox1.LowerMiddleText = null;
+                pictureBox1.LowerLeftText = null;
+            }
+            else
+            {
+                pictureBox1.LowerMiddleText = lowerMiddleText;
+                pictureBox1.LowerLeftText = lowerLeftText;                
             }
             _preLoadTimer.Stop();
             if (!file.IsAnimatedGif())
@@ -180,14 +212,33 @@ namespace SlideshowViewer
         {
             if (e.KeyChar >= '0' && e.KeyChar <= '9')
                 MarkFile(e.KeyChar - '0', Files[FileIndex]);
+            if (e.KeyChar == 'b' && ToggleBrowsing != null)
+                ToggleBrowsing(Files[FileIndex]);
+            if (e.KeyChar == 'i')
+            {
+                ShowInfo = !ShowInfo;
+                ShowPicture();
+            }
+            if (e.KeyChar == 'q')
+            {
+                Files[FileIndex].RotateLeft();
+                ShowPicture();
+            }
+            if (e.KeyChar == 'e')
+            {
+                Files[FileIndex].RotateRight();
+                ShowPicture();
+            }
+
             base.OnKeyPress(e);
         }
+
 
         protected override void OnMouseWheel(MouseEventArgs e)
         {
             if (e.Delta > 0)
             {
-                PrevPicture();                
+                PrevPicture();
             }
             else
             {
@@ -206,16 +257,10 @@ namespace SlideshowViewer
 
         private void Pause()
         {
-            if (_slideShowTimer.Enabled)
-            {
-                _slideShowTimer.Stop();
-                pictureBox1.LowerMiddleText = "PAUSED";
-            }
-            else
-            {
-                _slideShowTimer.Start();
-                pictureBox1.LowerMiddleText = null;
-            }
+            if (Browsing)
+                return;
+            Paused = !Paused;
+            ShowPicture();
         }
 
         private void NextPicture()
@@ -243,8 +288,7 @@ namespace SlideshowViewer
             foreach (PictureFile pictureFile in Files)
             {
                 pictureFile.UnloadImage();
-            }            
-
+            }
         }
     }
 }

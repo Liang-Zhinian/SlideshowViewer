@@ -69,15 +69,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DirectoryFileGroup.cs" />
-    <Compile Include="DirectoryTree.cs">
+    <Compile Include="FileGroup.cs" />
+    <Compile Include="DirectoryTree.cs" />
+    <Compile Include="DirectoryTreeForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="DirectoryTree.Designer.cs">
-      <DependentUpon>DirectoryTree.cs</DependentUpon>
+    <Compile Include="DirectoryTreeForm.Designer.cs">
+      <DependentUpon>DirectoryTreeForm.cs</DependentUpon>
     </Compile>
     <Compile Include="FileAssociation.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="FileScanner.cs" />
     <Compile Include="MyPictureBox.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -97,8 +99,8 @@
     <Compile Include="SplashScreen.Designer.cs">
       <DependentUpon>SplashScreen.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="DirectoryTree.resx">
-      <DependentUpon>DirectoryTree.cs</DependentUpon>
+    <EmbeddedResource Include="DirectoryTreeForm.resx">
+      <DependentUpon>DirectoryTreeForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PictureViewerForm.resx">
       <DependentUpon>PictureViewerForm.cs</DependentUpon>

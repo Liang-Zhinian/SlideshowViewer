@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
 using SlideshowViewer.Properties;
@@ -12,8 +12,8 @@ namespace SlideshowViewer
 {
     internal static class Program
     {
-        private static IEnumerable<string> _filenamepatterns;
-        private static DirectoryTree _directoryTree;
+        private static DirectoryTree _directoryTreeForm;
+        private static readonly FileScanner _fileScanner = new FileScanner();
 
         /// <summary>
         ///     The main entry point for the application.
@@ -21,29 +21,49 @@ namespace SlideshowViewer
         [STAThread]
         private static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException+=delegate(object sender, UnhandledExceptionEventArgs eventArgs)
+                {
+                    MessageBox.Show("Exception:\n" + eventArgs.ExceptionObject.ToString(), "Error", MessageBoxButtons.OK,
+                                    MessageBoxIcon.Error);
+                };
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            var splashScreen = new SplashScreen();
+            splashScreen.Icon = Resources.image_x_generic;
+            splashScreen.Show();
+            Application.DoEvents();
+            _directoryTreeForm = new DirectoryTree();
+            AddToFolderContextMenu();
+
+            ReadDefaultConfig();
+            ReadConfiguration(args);
+            CancellationTokenSource cancellationTokenSource=new CancellationTokenSource();
+            Action<long> progress = delegate(long l)
+                {
+                    splashScreen.BeginInvoke(new MethodInvoker(delegate
+                        {
+                            splashScreen.numberOfFilesScanned.Text = string.Format("{0:n0}", l);
+                        }));
+                };
+            var scanFilesTask = new Task<FileGroup>(() => _fileScanner.GetRoot(cancellationTokenSource.Token,progress));
+            splashScreen.Closed += (sender, eventArgs) => cancellationTokenSource.Cancel();
+            scanFilesTask.Start();
+            while (!scanFilesTask.IsCompleted)
+            {
+                Application.DoEvents();
+            }
             try
             {
-                Application.EnableVisualStyles();
-                Application.SetCompatibleTextRenderingDefault(false);
-                var splashScreen = new SplashScreen();
-                splashScreen.Icon = Resources.image_x_generic;
-                splashScreen.Show();
-                Application.DoEvents();
-                _directoryTree=new DirectoryTree();
-                AddToFolderContextMenu();
-                _filenamepatterns =
-                    ImageCodecInfo.GetImageEncoders().SelectMany(info => info.FilenameExtension.Split(';'));
-                ReadDefaultConfig();
-                ReadConfiguration(args);
-                splashScreen.Dispose();
-
-                Application.Run(_directoryTree);
+                _directoryTreeForm.SetRoot(scanFilesTask.Result);
             }
-            catch (Exception e)
+            catch (AggregateException e)
             {
-                Console.WriteLine(e);
-                MessageBox.Show("Error:\n" + e, "Error showing slideshow", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (e.InnerException is OperationCanceledException)
+                    return;
+                throw;
             }
+            splashScreen.Dispose();
+            _directoryTreeForm.Run();
         }
 
 
@@ -83,8 +103,8 @@ namespace SlideshowViewer
         {
             string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                                               "SSV");
-            if (!System.IO.Directory.Exists(appDataPath))
-                System.IO.Directory.CreateDirectory(appDataPath);
+            if (!Directory.Exists(appDataPath))
+                Directory.CreateDirectory(appDataPath);
             string defaultConfig = Path.Combine(appDataPath, "defaults.ssv");
             if (!File.Exists(defaultConfig))
                 using (StreamWriter streamWriter = File.CreateText(defaultConfig))
@@ -96,7 +116,8 @@ namespace SlideshowViewer
 # text={2}
 # delay={3}
 # minSize={4}
-", _directoryTree.Loop, _directoryTree.Shuffle, _directoryTree.Text, _directoryTree.DelayInSec, _directoryTree.MinFileSize);
+", _directoryTreeForm.Loop, _directoryTreeForm.Shuffle, _directoryTreeForm.OverlayText, _directoryTreeForm.DelayInSec,
+                        _directoryTreeForm.MinFileSize);
                 }
             ReadConfiguration(File.ReadLines(defaultConfig));
         }
@@ -118,98 +139,62 @@ namespace SlideshowViewer
                     switch (cmd)
                     {
                         case "delay":
-                            _directoryTree.DelayInSec = Convert.ToInt32(value);
+                            _directoryTreeForm.DelayInSec = Convert.ToInt32(value);
                             break;
                         case "loop":
-                            _directoryTree.Loop = Convert.ToBoolean(value);
+                            _directoryTreeForm.Loop = Convert.ToBoolean(value);
                             break;
                         case "file":
-                            _directoryTree.AddFile(new PictureFile(new FileInfo(value)));
+                            if (!_fileScanner.AddFile(value))
+                                throw new ApplicationException("Not picture file " + value);
                             break;
                         case "commandfile":
                             ReadConfiguration(File.ReadLines(value));
                             break;
                         case "scanRecursive":
                         case "scan":
-                            AddFolder(value);
+                            _fileScanner.AddFolder(value);
                             break;
                         case "text":
-                            _directoryTree.Text = value;
+                            _directoryTreeForm.OverlayText = value;
                             break;
                         case "shuffle":
-                            _directoryTree.Shuffle = Convert.ToBoolean(value);
+                            _directoryTreeForm.Shuffle = Convert.ToBoolean(value);
+                            break;
+                        case "browse":
+                            _directoryTreeForm.Browse = Convert.ToBoolean(value);
                             break;
                         case "autorun":
-                            _directoryTree.AutoRun = Convert.ToBoolean(value);
+                            _directoryTreeForm.AutoRun = Convert.ToBoolean(value);
                             break;
                         case "resumefile":
                         case "resume":
-                            _directoryTree.ResumeManager = new FileResumeManager(value);
+                            _directoryTreeForm.ResumeManager = new FileResumeManager(value);
                             break;
                         case "minSize":
-                            _directoryTree.MinFileSize = Convert.ToInt64(value);
+                            _directoryTreeForm.MinFileSize = Convert.ToInt64(value);
                             break;
                         default:
                             throw new ApplicationException("Unknown command " + cmd);
                     }
                 }
-                else if (System.IO.Directory.Exists(arg))
+                else if (Directory.Exists(arg))
                 {
-                    AddFolder(arg);
+                    _fileScanner.AddFolder(arg);
                 }
                 else if (File.Exists(arg))
                 {
-                    if (_filenamepatterns.Any(s => Path.GetFileName(arg).MatchGlob(s)))
-                        _directoryTree.AddFile(new PictureFile(new FileInfo(arg)));
+                    if (_fileScanner.AddFile(arg))
+                    {
+                    }
                     else if (Path.GetFileName(arg).MatchGlob("*.ssv"))
                         ReadConfiguration(File.ReadLines(arg));
                     else throw new ApplicationException("Unknown file format " + arg);
                 }
                 else
                 {
-                    throw new ApplicationException("Not an command " + arg);
+                    throw new ApplicationException("File not found " + arg);
                 }
-            }
-        }
-
-        private static void AddFolder(string s)
-        {
-            _directoryTree.AddBaseDir(new DirectoryInfo(s).FullName);
-            IEnumerable<FileInfo> scanRecursive = ScanRecursive(s);
-            foreach (FileInfo file in scanRecursive)
-            {
-                _directoryTree.AddFile(new PictureFile(file));
-            }
-        }
-
-        private static IEnumerable<FileInfo> ScanRecursive(string dirName)
-        {
-            IEnumerable<FileInfo> files =
-                _filenamepatterns.SelectMany(
-                    pattern =>
-                    new DirectoryInfo(dirName).EnumerateFiles(pattern)).Distinct(new CompareFileNames());
-            foreach (FileInfo file in files)
-            {
-                yield return file;
-            }
-            foreach (string directory in System.IO.Directory.GetDirectories(dirName))
-            {
-                if (Path.GetFileName(directory) != ".picasaoriginals")
-                    foreach (FileInfo file in ScanRecursive(directory))
-                        yield return file;
-            }
-        }
-
-        private class CompareFileNames : IEqualityComparer<FileInfo>
-        {
-            public bool Equals(FileInfo x, FileInfo y)
-            {
-                return x.FullName == y.FullName;
-            }
-
-            public int GetHashCode(FileInfo obj)
-            {
-                return obj.FullName.GetHashCode();
             }
         }
     }

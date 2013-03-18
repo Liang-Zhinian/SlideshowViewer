@@ -28,45 +28,56 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.numberOfFilesScanned = new System.Windows.Forms.Label();
+            this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
-            // pictureBox1
+            // numberOfFilesScanned
             // 
-            this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.pictureBox1.Image = global::SlideshowViewer.Properties.Resources.Splash;
-            this.pictureBox1.Location = new System.Drawing.Point(0, 0);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(342, 339);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
+            this.numberOfFilesScanned.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.numberOfFilesScanned.Location = new System.Drawing.Point(210, 232);
+            this.numberOfFilesScanned.MinimumSize = new System.Drawing.Size(60, 0);
+            this.numberOfFilesScanned.Name = "numberOfFilesScanned";
+            this.numberOfFilesScanned.Size = new System.Drawing.Size(79, 15);
+            this.numberOfFilesScanned.TabIndex = 1;
+            this.numberOfFilesScanned.Text = "0";
+            this.numberOfFilesScanned.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(210, 250);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(79, 33);
+            this.button1.TabIndex = 2;
+            this.button1.Text = "Cancel";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
             // SplashScreen
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.AutoSize = true;
             this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.ClientSize = new System.Drawing.Size(342, 339);
-            this.Controls.Add(this.pictureBox1);
+            this.BackgroundImage = global::SlideshowViewer.Properties.Resources.Splash;
+            this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Center;
+            this.ClientSize = new System.Drawing.Size(301, 295);
+            this.Controls.Add(this.button1);
+            this.Controls.Add(this.numberOfFilesScanned);
+            this.Cursor = System.Windows.Forms.Cursors.Help;
             this.Name = "SplashScreen";
-            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Show;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Slideshow Viewer";
             this.TopMost = true;
-            this.UseWaitCursor = true;
             this.Load += new System.EventHandler(this.SplashScreen_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
-            this.PerformLayout();
 
         }
 
         #endregion
 
-        private System.Windows.Forms.PictureBox pictureBox1;
+        public System.Windows.Forms.Label numberOfFilesScanned;
+        private System.Windows.Forms.Button button1;
 
     }
 }
