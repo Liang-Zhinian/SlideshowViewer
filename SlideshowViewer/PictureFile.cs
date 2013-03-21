@@ -134,6 +134,16 @@ namespace SlideshowViewer
                 try
                 {
                     _image = new Bitmap(FileName);
+
+                    const double maxSideSize = 2000;
+
+                    if (_image.Height > maxSideSize || _image.Width > maxSideSize)
+                    {
+                        Image oldImage = _image;
+                        var scalefactor = Math.Min(maxSideSize / oldImage.Height, maxSideSize / oldImage.Width);
+                        _image = new Bitmap(oldImage, (int)Math.Round(oldImage.Width * scalefactor), (int)Math.Round(oldImage.Height * scalefactor));
+                        oldImage.Dispose();
+                    }
 /*
 1 = Horizontal (normal) 
 2 = Mirror horizontal 
@@ -168,6 +178,7 @@ namespace SlideshowViewer
                             _image.RotateFlip(RotateFlipType.Rotate270FlipNone);
                             break;
                     }
+
                 }
                 catch (Exception e)
                 {

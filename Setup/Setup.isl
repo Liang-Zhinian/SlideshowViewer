@@ -1843,6 +1843,11 @@
 		<col def="S255">ProgId_</col>
 		<col def="S64">MIME_</col>
 		<col def="s38">Feature_</col>
+		<row><td>NewExtension1</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
+		<row><td>NewExtension2</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
+		<row><td>NewExtension3</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
+		<row><td>NewExtension4</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
+		<row><td>ssv</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
 	</table>
 
 	<table name="Feature">
@@ -1899,6 +1904,7 @@
 		<col def="S255">Data</col>
 		<row><td>PROJECT_ASSISTANT_DEFAULT_FEATURE</td><td>AlwaysInstall</td></row>
 		<row><td>PROJECT_ASSISTANT_FEATURES</td><td>NonSelectable</td></row>
+		<row><td>RegistryPageEnabled</td><td>Yes</td></row>
 	</table>
 
 	<table name="ISBillBoard">
@@ -3874,6 +3880,8 @@
 		<row><td>ID_STRING2</td><td>1033</td><td>http://www.Nemosoft.com</td><td>0</td><td/><td>1638001538</td></row>
 		<row><td>ID_STRING3</td><td>1033</td><td>Nemosoft</td><td>0</td><td/><td>1638001538</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>1033</td><td>This feature will remain uninstalled.</td><td>0</td><td/><td>1637972482</td></row>
+		<row><td>NEW_STRING1</td><td>1033</td><td>ssv</td><td>0</td><td/><td>-1449020297</td></row>
+		<row><td>NEW_STRING2</td><td>1033</td><td>Folder</td><td>0</td><td/><td>-1449065129</td></row>
 	</table>
 
 	<table name="ISSwidtagProperty">
@@ -3981,6 +3989,8 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I2">ISIconIndex</col>
 		<row><td>ARPPRODUCTICON.exe</td><td/><td>&lt;ISProductFolder&gt;\redist\Language Independent\OS Independent\setupicon.ico</td><td>0</td></row>
+		<row><td>_6D239292_6D9F_4D03_993E_0DE2F7AAA252</td><td/><td>V:\Egne\CSharp\SlideshowViewer\SlideshowViewer\Resources\image-x-generic.ico</td><td>0</td></row>
+		<row><td>_AA38F2F7_6CCD_4DE1_9D1D_319F4B340266</td><td/><td>V:\Egne\CSharp\SlideshowViewer\SlideshowViewer\Resources\image-x-generic.ico</td><td>0</td></row>
 	</table>
 
 	<table name="IniFile">
@@ -4113,7 +4123,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>ISTheme</td><td>InstallShield Blue.theme</td></row>
 		<row><td>ISUSLock</td><td>{A31092E1-FCFF-4A1E-85BD-6E1883CCD0A8}</td></row>
 		<row><td>ISUSSignature</td><td>{4F77B654-B8C7-49D5-99F5-81550364EBEC}</td></row>
-		<row><td>ISVisitedViews</td><td>viewAssistant,viewAppFiles,viewFeatureFiles,viewDependencies,viewDesignPatches,viewSystemSearch,viewInstallScriptStd,viewCustomActions,viewSupportFiles,viewISToday,viewShortcuts,viewProject,viewUpgradePaths,viewObjects,viewRegistry,viewIniFiles,viewFileExtensions,viewUI,viewTextMessages</td></row>
+		<row><td>ISVisitedViews</td><td>viewAssistant,viewAppFiles,viewFeatureFiles,viewDependencies,viewDesignPatches,viewSystemSearch,viewInstallScriptStd,viewCustomActions,viewSupportFiles,viewISToday,viewShortcuts,viewProject,viewUpgradePaths,viewObjects,viewRegistry,viewIniFiles,viewFileExtensions,viewUI,viewTextMessages,viewRelease,viewSetupDesign,viewUpdateService</td></row>
 		<row><td>Limited</td><td>1</td></row>
 		<row><td>LockPermissionMode</td><td>1</td></row>
 		<row><td>MsiExecCmdLineOptions</td><td/></row>
@@ -4412,6 +4422,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="S72">Icon_</col>
 		<col def="I2">IconIndex</col>
 		<col def="I4">ISAttributes</col>
+		<row><td>SlideshowViewer.File</td><td/><td/><td>Slideshow Viewer Command File</td><td/><td>0</td><td/></row>
 	</table>
 
 	<table name="Property">
@@ -4561,6 +4572,9 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="S0">Value</col>
 		<col def="s72">Component_</col>
 		<col def="I4">ISAttributes</col>
+		<row><td>Registry1</td><td>0</td><td>Folder\shell\SlideshowViewer</td><td/><td>Show slideshow</td><td>ISX_DEFAULTCOMPONENT1</td><td>0</td></row>
+		<row><td>Registry2</td><td>0</td><td>Folder\shell\SlideshowViewer</td><td>Icon</td><td>[INSTALLDIR]</td><td>ISX_DEFAULTCOMPONENT1</td><td>0</td></row>
+		<row><td>Registry3</td><td>0</td><td>Folder\shell\SlideshowViewer\command</td><td/><td>"C:\Program Files\Sandboxie\Start.exe" /box:__ask__ "C:\Windows\explorer.exe" "%1"</td><td>ISX_DEFAULTCOMPONENT1</td><td>0</td></row>
 	</table>
 
 	<table name="RemoveFile">
@@ -4788,6 +4802,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="I2">Sequence</col>
 		<col def="L255">Command</col>
 		<col def="L255">Argument</col>
+		<row><td>ssv</td><td>open</td><td/><td/><td>"commandfile=%1"</td></row>
 	</table>
 
 	<table name="_Validation">

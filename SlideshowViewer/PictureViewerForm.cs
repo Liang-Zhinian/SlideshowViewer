@@ -82,6 +82,10 @@ namespace SlideshowViewer
             {
                 if (Loop)
                 {
+                    if (AllPicturesShown != null)
+                    {
+                        AllPicturesShown(Files);
+                    }
                     FileIndex = 0;
                 }
                 else
@@ -107,7 +111,7 @@ namespace SlideshowViewer
 
             pictureBox1.HighQuality = imageDuration == 0;
             pictureBox1.Image = bitmap;
-            string lowerMiddleText = null;
+            string lowerRightText = null;
             string lowerLeftText = null;
             
             lowerLeftText = GetOverlayText(file, OverlayTextTemplate);
@@ -124,29 +128,25 @@ namespace SlideshowViewer
                 }
                 else
                 {
-                    lowerMiddleText = "PAUSED";
+                    lowerRightText = "PAUSED";
                 }
                 if (PictureShown != null)
                 {
                     PictureShown(file);
                 }
-                if (FileIndex == Files.Count - 1 && AllPicturesShown != null)
-                {
-                    AllPicturesShown(Files);
-                }
             }
             else
             {
-                lowerMiddleText = "BROWSING";
+                lowerRightText = "BROWSING";
             }
             if (!ShowInfo)
             {
-                pictureBox1.LowerMiddleText = null;
+                pictureBox1.LowerRightText = null;
                 pictureBox1.LowerLeftText = null;
             }
             else
             {
-                pictureBox1.LowerMiddleText = lowerMiddleText;
+                pictureBox1.LowerRightText = lowerRightText;
                 pictureBox1.LowerLeftText = lowerLeftText;                
             }
             _preLoadTimer.Stop();
@@ -252,7 +252,7 @@ namespace SlideshowViewer
             using (File.Create(pictureFile.FileName + ".ssv." + i))
             {
             }
-            pictureBox1.LowerMiddleText = "MARKED " + i;
+            pictureBox1.LowerRightText = "MARKED " + i;
         }
 
         private void Pause()

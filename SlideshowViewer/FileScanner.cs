@@ -9,17 +9,22 @@ namespace SlideshowViewer
 {
     public class FileScanner
     {
-        private static readonly IEnumerable<string> _filenamepatterns =
-            ImageCodecInfo.GetImageEncoders().SelectMany(info => info.FilenameExtension.Split(';'));
+        public static IEnumerable<string> FileNamePatterns { get; private set; }
 
         private List<string> _fileNames=new List<string>();
         private List<string> _folders = new List<string>();
 
+        static FileScanner()
+        {
+            FileNamePatterns = ImageCodecInfo.GetImageEncoders().SelectMany(info => info.FilenameExtension.Split(';'));
+        }
+
         public bool AddFile(string filename)
         {
-            if (_filenamepatterns.Any(s => Path.GetFileName(filename).MatchGlob(s)))
-                _fileNames.Add(filename);
-            return false;
+            if (!FileNamePatterns.Any(s => Path.GetFileName(filename).MatchGlob(s)))
+                return false;
+            _fileNames.Add(filename);
+            return true;
         }
 
 
@@ -28,26 +33,8 @@ namespace SlideshowViewer
             _folders.Add(folderName);
         }
 
-        private static IEnumerable<FileInfo> ScanRecursive(string dirName)
-        {
-            var files =
-                _filenamepatterns.SelectMany(
-                    pattern =>
-                    new DirectoryInfo(dirName).EnumerateFiles(pattern)).Distinct(new CompareFileNames());
-            foreach (FileInfo file in files)
-            {
-                if (!file.Name.StartsWith("._"))
-                    yield return file;
-            }
-            foreach (string directory in Directory.GetDirectories(dirName))
-            {
-                if (Path.GetFileName(directory) != ".picasaoriginals")
-                    foreach (FileInfo file in ScanRecursive(directory))
-                        yield return file;
-            }
-        }
 
-        private class CompareFileNames : IEqualityComparer<FileInfo>
+        public class CompareFileNames : IEqualityComparer<FileInfo>
         {
             public bool Equals(FileInfo x, FileInfo y)
             {
@@ -60,38 +47,21 @@ namespace SlideshowViewer
             }
         }
 
-        public FileGroup GetRoot()
+        public RootFileGroup GetRoot()
         {
-            return GetRoot(CancellationToken.None,delegate(long l) {  });
-        }
+            var root = new RootFileGroup();
 
-        public FileGroup GetRoot(CancellationToken ct, Action<long> Progress)
-        {
-            long numberOfFiles = 0;
-            RootFileGroup root = new RootFileGroup();
+            root.AddGroups(_folders.Select(s => new DirectoryInfo(s)).Select(info => new ScanningDirectoryFileGroup(info.FullName,info)));
+            
+            if (!_fileNames.IsEmpty())
+            {
+                var manuallyAdded = new FileGroup("Manually added");
+                manuallyAdded.AddFiles(_fileNames.Select(s => new FileInfo(s)).Select(info => new PictureFile(info)));
+                root.AddGroup(manuallyAdded);
+            }
 
-            foreach (var folder in _folders)
-            {
-                root.AddBaseDir(new DirectoryInfo(folder).FullName);
-                foreach (FileInfo file in ScanRecursive(folder))
-                {
-                    ct.ThrowIfCancellationRequested();
-                    root.AddFile(new PictureFile(file));
-                    numberOfFiles++;
-                    if (numberOfFiles%100 == 0)
-                        Progress(numberOfFiles);
-                }
-                
-            }
-            foreach (var fileName in _fileNames)
-            {
-                ct.ThrowIfCancellationRequested();
-                root.AddFile(new PictureFile(new FileInfo(fileName)));
-                numberOfFiles++;
-                if (numberOfFiles % 100 == 0)
-                    Progress(numberOfFiles);
-            }
             return root;
         }
+
     }
 }

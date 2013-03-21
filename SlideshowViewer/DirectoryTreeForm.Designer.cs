@@ -31,6 +31,11 @@
             this.components = new System.ComponentModel.Container();
             this.panel1 = new System.Windows.Forms.Panel();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.browse = new System.Windows.Forms.CheckBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.delay = new System.Windows.Forms.NumericUpDown();
+            this.label5 = new System.Windows.Forms.Label();
             this.loop = new System.Windows.Forms.CheckBox();
             this.label4 = new System.Windows.Forms.Label();
             this.modifiedAfterSuffix = new System.Windows.Forms.ComboBox();
@@ -41,30 +46,32 @@
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
             this.shuffle = new System.Windows.Forms.CheckBox();
-            this.label5 = new System.Windows.Forms.Label();
-            this.delay = new System.Windows.Forms.NumericUpDown();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.browse = new System.Windows.Forms.CheckBox();
             this.directoryTreeView = new BrightIdeasSoftware.TreeListView();
             this.DirectoryName = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.Total = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
+            this.panel2 = new System.Windows.Forms.Panel();
+            this.statusBar = new System.Windows.Forms.Label();
+            this.throbber = new System.Windows.Forms.PictureBox();
+            this.panel3 = new System.Windows.Forms.Panel();
             this.panel1.SuspendLayout();
             this.tableLayoutPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.delay)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.modifiedAfter)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.minSize)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.delay)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.directoryTreeView)).BeginInit();
+            this.panel2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.throbber)).BeginInit();
+            this.panel3.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel1
             // 
             this.panel1.Controls.Add(this.tableLayoutPanel1);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel1.Location = new System.Drawing.Point(816, 0);
+            this.panel1.Location = new System.Drawing.Point(752, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(291, 796);
-            this.panel1.TabIndex = 2;
+            this.panel1.Size = new System.Drawing.Size(355, 604);
+            this.panel1.TabIndex = 3;
             // 
             // tableLayoutPanel1
             // 
@@ -101,8 +108,69 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(291, 796);
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(355, 604);
             this.tableLayoutPanel1.TabIndex = 0;
+            // 
+            // browse
+            // 
+            this.browse.AutoSize = true;
+            this.tableLayoutPanel1.SetColumnSpan(this.browse, 3);
+            this.browse.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.browse.Location = new System.Drawing.Point(3, 114);
+            this.browse.Name = "browse";
+            this.browse.Size = new System.Drawing.Size(349, 17);
+            this.browse.TabIndex = 14;
+            this.browse.Text = "Browse";
+            this.browse.UseVisualStyleBackColor = true;
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.tableLayoutPanel1.SetColumnSpan(this.label7, 3);
+            this.label7.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.Location = new System.Drawing.Point(3, 134);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(349, 17);
+            this.label7.TabIndex = 13;
+            this.label7.Text = "Slideshow Options";
+            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label6.Location = new System.Drawing.Point(183, 174);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(169, 26);
+            this.label6.TabIndex = 12;
+            this.label6.Text = "seconds";
+            this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // delay
+            // 
+            this.delay.AutoSize = true;
+            this.delay.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.delay.Location = new System.Drawing.Point(130, 177);
+            this.delay.Maximum = new decimal(new int[] {
+            9999,
+            0,
+            0,
+            0});
+            this.delay.Name = "delay";
+            this.delay.Size = new System.Drawing.Size(47, 20);
+            this.delay.TabIndex = 11;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.label5.Location = new System.Drawing.Point(3, 174);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(121, 26);
+            this.label5.TabIndex = 10;
+            this.label5.Text = "Each picture i shown for";
+            this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // loop
             // 
@@ -111,7 +179,7 @@
             this.loop.Dock = System.Windows.Forms.DockStyle.Fill;
             this.loop.Location = new System.Drawing.Point(3, 91);
             this.loop.Name = "loop";
-            this.loop.Size = new System.Drawing.Size(285, 17);
+            this.loop.Size = new System.Drawing.Size(349, 17);
             this.loop.TabIndex = 9;
             this.loop.Text = "Loop";
             this.loop.UseVisualStyleBackColor = true;
@@ -124,7 +192,7 @@
             this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label4.Location = new System.Drawing.Point(3, 71);
             this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(285, 17);
+            this.label4.Size = new System.Drawing.Size(349, 17);
             this.label4.TabIndex = 7;
             this.label4.Text = "Options";
             this.label4.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -141,7 +209,7 @@
             this.modifiedAfterSuffix.Location = new System.Drawing.Point(183, 47);
             this.modifiedAfterSuffix.MinimumSize = new System.Drawing.Size(40, 0);
             this.modifiedAfterSuffix.Name = "modifiedAfterSuffix";
-            this.modifiedAfterSuffix.Size = new System.Drawing.Size(105, 21);
+            this.modifiedAfterSuffix.Size = new System.Drawing.Size(169, 21);
             this.modifiedAfterSuffix.TabIndex = 5;
             // 
             // modifiedAfter
@@ -195,7 +263,7 @@
             this.minSizeSuffix.Location = new System.Drawing.Point(183, 20);
             this.minSizeSuffix.MinimumSize = new System.Drawing.Size(40, 0);
             this.minSizeSuffix.Name = "minSizeSuffix";
-            this.minSizeSuffix.Size = new System.Drawing.Size(105, 21);
+            this.minSizeSuffix.Size = new System.Drawing.Size(169, 21);
             this.minSizeSuffix.TabIndex = 2;
             // 
             // label2
@@ -217,7 +285,7 @@
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label3.Location = new System.Drawing.Point(3, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(285, 17);
+            this.label3.Size = new System.Drawing.Size(349, 17);
             this.label3.TabIndex = 6;
             this.label3.Text = "Filter";
             this.label3.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -229,76 +297,16 @@
             this.shuffle.Dock = System.Windows.Forms.DockStyle.Fill;
             this.shuffle.Location = new System.Drawing.Point(3, 154);
             this.shuffle.Name = "shuffle";
-            this.shuffle.Size = new System.Drawing.Size(285, 17);
+            this.shuffle.Size = new System.Drawing.Size(349, 17);
             this.shuffle.TabIndex = 8;
             this.shuffle.Text = "Shuffle";
             this.shuffle.UseVisualStyleBackColor = true;
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label5.Location = new System.Drawing.Point(3, 174);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(121, 26);
-            this.label5.TabIndex = 10;
-            this.label5.Text = "Each picture i shown for";
-            this.label5.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // delay
-            // 
-            this.delay.AutoSize = true;
-            this.delay.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.delay.Location = new System.Drawing.Point(130, 177);
-            this.delay.Maximum = new decimal(new int[] {
-            9999,
-            0,
-            0,
-            0});
-            this.delay.Name = "delay";
-            this.delay.Size = new System.Drawing.Size(47, 20);
-            this.delay.TabIndex = 11;
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label6.Location = new System.Drawing.Point(183, 174);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(105, 26);
-            this.label6.TabIndex = 12;
-            this.label6.Text = "seconds";
-            this.label6.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.tableLayoutPanel1.SetColumnSpan(this.label7, 3);
-            this.label7.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.label7.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(3, 134);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(285, 17);
-            this.label7.TabIndex = 13;
-            this.label7.Text = "Slideshow Options";
-            this.label7.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // browse
-            // 
-            this.browse.AutoSize = true;
-            this.tableLayoutPanel1.SetColumnSpan(this.browse, 3);
-            this.browse.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.browse.Location = new System.Drawing.Point(3, 114);
-            this.browse.Name = "browse";
-            this.browse.Size = new System.Drawing.Size(285, 17);
-            this.browse.TabIndex = 14;
-            this.browse.Text = "Browse";
-            this.browse.UseVisualStyleBackColor = true;
             // 
             // directoryTreeView
             // 
             this.directoryTreeView.AllColumns.Add(this.DirectoryName);
             this.directoryTreeView.AllColumns.Add(this.Total);
+            this.directoryTreeView.BackColor = System.Drawing.Color.Ivory;
             this.directoryTreeView.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.DirectoryName,
             this.Total});
@@ -309,7 +317,7 @@
             this.directoryTreeView.Name = "directoryTreeView";
             this.directoryTreeView.OwnerDraw = true;
             this.directoryTreeView.ShowGroups = false;
-            this.directoryTreeView.Size = new System.Drawing.Size(816, 796);
+            this.directoryTreeView.Size = new System.Drawing.Size(752, 604);
             this.directoryTreeView.TabIndex = 1;
             this.directoryTreeView.UseCompatibleStateImageBehavior = false;
             this.directoryTreeView.UseTranslucentSelection = true;
@@ -330,6 +338,51 @@
             this.Total.HeaderTextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.Total.Text = "Total";
             this.Total.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.Total.Width = 180;
+            // 
+            // panel2
+            // 
+            this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.panel2.Controls.Add(this.statusBar);
+            this.panel2.Controls.Add(this.throbber);
+            this.panel2.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel2.Location = new System.Drawing.Point(0, 604);
+            this.panel2.Name = "panel2";
+            this.panel2.Size = new System.Drawing.Size(1107, 22);
+            this.panel2.TabIndex = 1;
+            // 
+            // statusBar
+            // 
+            this.statusBar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.statusBar.Location = new System.Drawing.Point(18, 0);
+            this.statusBar.Name = "statusBar";
+            this.statusBar.Size = new System.Drawing.Size(1085, 18);
+            this.statusBar.TabIndex = 0;
+            this.statusBar.Text = "status";
+            this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // throbber
+            // 
+            this.throbber.Dock = System.Windows.Forms.DockStyle.Left;
+            this.throbber.Image = global::SlideshowViewer.Properties.Resources.throbber;
+            this.throbber.Location = new System.Drawing.Point(0, 0);
+            this.throbber.MinimumSize = new System.Drawing.Size(18, 18);
+            this.throbber.Name = "throbber";
+            this.throbber.Size = new System.Drawing.Size(18, 18);
+            this.throbber.SizeMode = System.Windows.Forms.PictureBoxSizeMode.CenterImage;
+            this.throbber.TabIndex = 1;
+            this.throbber.TabStop = false;
+            // 
+            // panel3
+            // 
+            this.panel3.AutoSize = true;
+            this.panel3.Controls.Add(this.directoryTreeView);
+            this.panel3.Controls.Add(this.panel1);
+            this.panel3.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.panel3.Location = new System.Drawing.Point(0, 0);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(1107, 604);
+            this.panel3.TabIndex = 4;
             // 
             // DirectoryTreeForm
             // 
@@ -337,20 +390,24 @@
             this.AccessibleName = "DirectoryTreeForm";
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1107, 796);
-            this.Controls.Add(this.directoryTreeView);
-            this.Controls.Add(this.panel1);
+            this.ClientSize = new System.Drawing.Size(1107, 626);
+            this.Controls.Add(this.panel3);
+            this.Controls.Add(this.panel2);
             this.Name = "DirectoryTreeForm";
             this.Text = "Slideshow Viewer";
             this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.panel1.ResumeLayout(false);
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.delay)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.modifiedAfter)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.minSize)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.delay)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.directoryTreeView)).EndInit();
+            this.panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.throbber)).EndInit();
+            this.panel3.ResumeLayout(false);
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -376,6 +433,10 @@
         private System.Windows.Forms.Label label6;
         public System.Windows.Forms.NumericUpDown delay;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.Panel panel3;
+        public System.Windows.Forms.Label statusBar;
+        public System.Windows.Forms.PictureBox throbber;
 
 
     }

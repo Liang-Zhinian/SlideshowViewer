@@ -3,14 +3,17 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Action = Amib.Threading.Action;
 
 namespace SlideshowViewer
 {
     public class FileGroup
     {
-        protected readonly List<PictureFile> _files = new List<PictureFile>();
+        private readonly List<PictureFile> _files = new List<PictureFile>();
         private readonly List<FileGroup> _groups = new List<FileGroup>();
-        private Func<PictureFile, bool> _filter = file => true;
+        private System.Func<PictureFile, bool> _filter = file => true;
         private long? _numberOfFilesFiltered;
 
 
@@ -21,7 +24,7 @@ namespace SlideshowViewer
 
         public virtual string Name { get; private set; }
 
-        public Func<PictureFile, bool> Filter
+        public System.Func<PictureFile, bool> Filter
         {
             get { return _filter; }
             set
@@ -37,18 +40,60 @@ namespace SlideshowViewer
 
         protected virtual IEnumerable<FileGroup> GetGroups()
         {
-            return _groups;
+            lock (_groups)
+            {
+                return new List<FileGroup>(_groups);
+            }
         }
 
-        protected void AddGroup(FileGroup fileGroup)
+        public void AddGroups(IEnumerable<FileGroup> fileGroups)
         {
-            _groups.Add(fileGroup);
+            lock (_groups)
+            {
+                _groups.AddRange(fileGroups);
+            }
         }
 
-        public virtual bool AddFile(PictureFile file)
+        public void RemoveGroups(IEnumerable<string> groups)
         {
-            _files.Add(file);
-            return true;
+            lock (_groups)
+            {
+                _groups.RemoveAll(@group => groups.Contains(group.Name));
+            }
+        }
+
+
+        public void AddFiles(IEnumerable<PictureFile> files)
+        {
+            lock (_files)
+            {
+                _files.AddRange(files);
+            }
+        }
+
+        public void RemoveFiles(IEnumerable<string> existingFiles)
+        {
+            lock (_files)
+            {
+                _files.RemoveAll(file => existingFiles.Contains(file.FileName));
+            }
+        }
+
+
+        public void AddGroup(FileGroup fileGroup)
+        {
+            lock (_groups)
+            {
+                _groups.Add(fileGroup);
+            }
+        }
+
+        public virtual void AddFile(PictureFile file)
+        {
+            lock (_files)
+            {
+                _files.Add(file);
+            }
         }
 
         public virtual IEnumerable<FileGroup> GetNonEmptyGroups()
@@ -74,7 +119,7 @@ namespace SlideshowViewer
 
         public IEnumerable<PictureFile> GetFilesRecursive()
         {
-            foreach (PictureFile pictureFile in GetFiles()) 
+            foreach (PictureFile pictureFile in GetFilteredFiles())
                 yield return pictureFile;
             foreach (FileGroup fileGroup in GetGroups())
             {
@@ -85,24 +130,46 @@ namespace SlideshowViewer
             }
         }
 
-        private IEnumerable<PictureFile> GetFiles()
+        public List<PictureFile> GetFiles()
         {
-            return _files.Where(_filter);
+            lock (_files)
+            {
+                return new List<PictureFile>(_files);
+            }
+        }
+
+        public IEnumerable<PictureFile> GetFilteredFiles()
+        {            
+            return GetFiles().Where(_filter);
         }
 
         public long GetNumberOfFiles()
         {
             if (_numberOfFilesFiltered == null)
-                _numberOfFilesFiltered = GetFiles().Count() +
+                _numberOfFilesFiltered = GetFilteredFiles().Count() +
                                          GetGroups().Sum(fileGroup => fileGroup.GetNumberOfFiles());
             return (long) _numberOfFilesFiltered;
         }
+
+        public virtual IEnumerable<FileGroup> ScanDirectories(CancellationToken token)
+        {
+            return GetGroups();
+        }
+
     }
 
 
-    internal class RootFileGroup : FileGroup
+    public class RootFileGroup : FileGroup
     {
-        private FileGroup _restGroup;
+        private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
+        private Action _onScanningDone;
+        private bool _scanningDone;
+        private object _onScanningDoneLock=new object();
+
+        public void Stop()
+        {
+            _tokenSource.Cancel();
+        }
 
         public RootFileGroup() : base("All files")
         {
@@ -113,37 +180,79 @@ namespace SlideshowViewer
             get { return GetGroups().Count() == 1 ? GetGroups().First().Name : base.Name; }
         }
 
-        private FileGroup GetRestGroup()
+        public Action OnScanningDone
         {
-            if (_restGroup == null)
-                _restGroup = new FileGroup("Manually added files");
-            return _restGroup;
-        }
-
-        protected override IEnumerable<FileGroup> GetGroups()
-        {
-            foreach (FileGroup fileGroup in base.GetGroups())
+            set
             {
-                yield return fileGroup;
+                lock (_onScanningDoneLock)
+                {
+                    _onScanningDone = value;
+                    if (_scanningDone)
+                        _onScanningDone();
+                }
             }
-            if (_restGroup != null)
-                yield return _restGroup;
         }
 
-        public override bool AddFile(PictureFile file)
+
+        public void StartScan()
         {
-            foreach (FileGroup fileGroup in GetGroups())
+            var thread = new Thread(FirstScan) {IsBackground = true};
+            thread.Start();
+        }
+
+        private void FirstScan()
+        {
+            try
             {
-                if (fileGroup.AddFile(file))
-                    return true;
+                Queue<FileGroup> groups = new Queue<FileGroup>();
+                groups.Enqueue(this);
+                while (groups.Count > 0)
+                {
+                    _tokenSource.Token.ThrowIfCancellationRequested();
+                    foreach (var fileGroup in groups.Dequeue().ScanDirectories(_tokenSource.Token))
+                    {
+                        groups.Enqueue(fileGroup);
+                    }
+                }
+                lock (_onScanningDoneLock)
+                {
+                    _scanningDone = true;
+                    if (_onScanningDone != null)
+                        _onScanningDone();
+                }
+                var thread = new Thread(ContinousScan) {Priority = ThreadPriority.BelowNormal,IsBackground = true};
+                thread.Start();
             }
-            return GetRestGroup().AddFile(file);
+            catch (OperationCanceledException)
+            {                
+            }
         }
 
-        public void AddBaseDir(string directory)
+        private void ContinousScan()
         {
-            AddGroup(new DirectoryFileGroup(directory));
+            try
+            {
+                while (true)
+                {
+                    _tokenSource.Token.WaitHandle.WaitOne(5000);
+                    _tokenSource.Token.ThrowIfCancellationRequested();
+                    Queue<FileGroup> groups = new Queue<FileGroup>();
+                    groups.Enqueue(this);
+                    while (groups.Count > 0)
+                    {
+                        _tokenSource.Token.ThrowIfCancellationRequested();
+                        foreach (var fileGroup in groups.Dequeue().ScanDirectories(_tokenSource.Token))
+                        {
+                            groups.Enqueue(fileGroup);
+                        }
+                    }
+                }
+            }
+            catch (OperationCanceledException )
+            {
+            }
         }
+
 
         public override IEnumerable<FileGroup> GetNonEmptyGroups()
         {
@@ -157,61 +266,97 @@ namespace SlideshowViewer
     }
 
 
-    internal class DirectoryFileGroup : FileGroup
+    internal class ScanningDirectoryFileGroup : FileGroup
     {
-        private readonly List<string> _parts;
+        private static bool _flag;
+        private static readonly object _flagLock = new object();
 
-        public DirectoryFileGroup(string name) : base(name)
+        private readonly DirectoryInfo _directoryInfo;
+
+
+        public ScanningDirectoryFileGroup(string name, DirectoryInfo directoryInfo)
+            : base(name)
         {
-            _parts = SplitPathIntoParts(name);
+            _directoryInfo = directoryInfo;
         }
 
-        public override bool AddFile(PictureFile file)
+        public static bool Changed
         {
-            string fileName = file.FileName;
-            List<string> parts = SplitPathIntoParts(fileName);
-            if (parts.StartsWith(_parts))
+            get
             {
-                parts = parts.GetRange(_parts.Count);
-                AddFile(parts, file);
-                return true;
-            }
-            return false;
-        }
-
-
-        protected void AddFile(List<string> parts, PictureFile file)
-        {
-            if (parts.Count == 1)
-            {
-                base.AddFile(file);
-            }
-            else
-            {
-                GetOrCreateDirectory(parts[0]).AddFile(parts.GetRange(1), file);
-            }
-        }
-
-
-        private DirectoryFileGroup GetOrCreateDirectory(string name)
-        {
-            var dir = (DirectoryFileGroup) GetGroups().FirstOrDefault(directory => directory.Name == name);
-            if (dir != null)
-                return dir;
-            dir = new DirectoryFileGroup(name);
-            AddGroup(dir);
-            return dir;
-        }
-
-        private List<string> SplitPathIntoParts(string name)
-        {
-            var ret = new List<string>();
-            ret.AddRange(name.Split(new[]
+                lock (_flagLock)
                 {
-                    Path.AltDirectorySeparatorChar,
-                    Path.DirectorySeparatorChar
-                }));
-            return ret;
+                    bool ret = _flag;
+                    _flag = false;
+                    return ret;
+                }
+            }
+            private set
+            {
+                lock (_flagLock)
+                {
+                    _flag = value;
+                }
+            }
         }
+
+
+        public override IEnumerable<FileGroup> ScanDirectories(CancellationToken token)
+        {
+            HashSet<string> existingGroups = new HashSet<string>(GetGroups().Select(@group => group.Name));
+            IEnumerable<ScanningDirectoryFileGroup> fileGroups =
+                _directoryInfo.EnumerateDirectories()
+                              .Where(info => info.Name != ".picasaoriginals")
+                              .Where(info => !existingGroups.Remove(info.Name))
+                              .Select(info => new ScanningDirectoryFileGroup(info.Name, info));
+
+
+            var groups = new List<FileGroup>();
+            foreach (ScanningDirectoryFileGroup fileGroup in fileGroups)
+            {
+                token.ThrowIfCancellationRequested();
+                groups.Add(fileGroup);
+            }
+            AddGroups(groups);
+
+            if (!existingGroups.IsEmpty())
+            {
+                RemoveGroups(existingGroups);
+                Changed = true;
+            }
+
+            HashSet<string> existingFiles=new HashSet<string>(GetFiles().Select(file => file.FileName));
+            IEnumerable<PictureFile> pictureFiles =
+                FileScanner.FileNamePatterns.SelectMany(pattern => _directoryInfo.EnumerateFiles(pattern))
+                           .Distinct(new FileScanner.CompareFileNames())
+                           .Where(info => !info.Name.StartsWith("._"))
+                           .Where(info => !existingFiles.Remove(info.FullName))
+                           .Select(info => new PictureFile(info));
+            var files = new List<PictureFile>();
+            foreach (PictureFile pictureFile in pictureFiles)
+            {
+                token.ThrowIfCancellationRequested();
+                files.Add(pictureFile);
+                if (files.Count > 1000)
+                {
+                    AddFiles(files);
+                    Changed = true;
+                    files=new List<PictureFile>();
+                }
+            }
+            if (!files.IsEmpty())
+            {
+                AddFiles(files);
+                Changed = true;                
+            }
+            if (!existingFiles.IsEmpty())
+            {
+                RemoveFiles(existingFiles);
+                Changed = true;
+            }
+
+            return GetGroups();
+        }
+
     }
 }

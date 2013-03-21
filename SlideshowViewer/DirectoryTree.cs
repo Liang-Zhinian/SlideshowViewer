@@ -1,29 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using SlideshowViewer.Properties;
+using Timer = System.Timers.Timer;
 
 namespace SlideshowViewer
 {
     public class DirectoryTree
     {
+        private readonly DirectoryTreeForm _form = new DirectoryTreeForm();
+        private bool _isScanning = true;
         private decimal _minFileSize;
         private decimal _modifiedAfter;
-        private readonly DirectoryTreeForm _form=new DirectoryTreeForm();
         private PictureViewerForm _pictureViewerForm;
-        private List<PictureFile> _slideshowFiles;
+        private Timer _refreshTimer;
+        private RootFileGroup _root;
         private int _slideshowFileIndex;
+        private List<PictureFile> _slideshowFiles;
 
         public DirectoryTree()
         {
-
             ResumeManager = new DummyResumeManager();
             Shuffle = false;
             Loop = true;
             DelayInSec = 15;
             OverlayText =
-                "{imageDescription}{eol}{description}{eol}{dateTime}{eol}{model}{eol}{fullName}  ( {index} / {total} )";
+                "{imageDescription}{eol}{description}{eol}{dateTime}{eol}{model}{eol}{fullName}{eol}{index} / {total}";
 
             AutoRun = true;
 
@@ -33,28 +37,30 @@ namespace SlideshowViewer
             _form.directoryTreeView.ItemActivate += DirectoryTreeViewOnItemActivate;
             _form.directoryTreeView.KeyPress +=
                 delegate(object sender, KeyPressEventArgs args) { args.Handled = args.KeyChar == '\r'; };
-            _form.Total.AspectGetter = rowObject => ((FileGroup)rowObject).GetNumberOfFiles();
+
+            _form.Total.AspectGetter = rowObject => ((FileGroup) rowObject).GetNumberOfFiles();
             _form.minSize.ValueChanged += MinSizeOnValueChanged;
             _form.minSizeSuffix.SelectedValueChanged += MinSizeOnValueChanged;
             _form.minSizeSuffix.Items.Clear();
             var bytes = new LabelledInt("bytes", 1);
             _form.minSizeSuffix.Items.Add(bytes);
             _form.minSizeSuffix.Items.Add(new LabelledInt("KB", 1024));
-            _form.minSizeSuffix.Items.Add(new LabelledInt("MB", 1024 * 1024));
+            _form.minSizeSuffix.Items.Add(new LabelledInt("MB", 1024*1024));
             _form.minSizeSuffix.SelectedItem = bytes;
             _form.modifiedAfterSuffix.Items.Clear();
             _form.modifiedAfterSuffix.Items.Add(new LabelledInt("seconds", 1));
             _form.modifiedAfterSuffix.Items.Add(new LabelledInt("minutes", 60));
-            _form.modifiedAfterSuffix.Items.Add(new LabelledInt("hours", 60 * 60));
-            var days = new LabelledInt("days", 60 * 60 * 24);
+            _form.modifiedAfterSuffix.Items.Add(new LabelledInt("hours", 60*60));
+            var days = new LabelledInt("days", 60*60*24);
             _form.modifiedAfterSuffix.Items.Add(days);
-            _form.modifiedAfterSuffix.Items.Add(new LabelledInt("weeks", 60 * 60 * 24 * 7));
-            _form.modifiedAfterSuffix.Items.Add(new LabelledInt("months", 60 * 60 * 24 * 30));
-            _form.modifiedAfterSuffix.Items.Add(new LabelledInt("years", 60 * 60 * 24 * 365));
+            _form.modifiedAfterSuffix.Items.Add(new LabelledInt("weeks", 60*60*24*7));
+            _form.modifiedAfterSuffix.Items.Add(new LabelledInt("months", 60*60*24*30));
+            _form.modifiedAfterSuffix.Items.Add(new LabelledInt("years", 60*60*24*365));
             _form.modifiedAfterSuffix.SelectedItem = days;
             _form.modifiedAfterSuffix.SelectedValueChanged += ModifiedAfterSuffixOnSelectedValueChanged;
             _form.modifiedAfter.ValueChanged += ModifiedAfterSuffixOnSelectedValueChanged;
             _form.Shown += OnFormShown;
+            _form.FormClosing += OnFormClosing;
         }
 
         public ResumeManager ResumeManager { get; set; }
@@ -108,19 +114,31 @@ namespace SlideshowViewer
 
         public bool AutoRun { get; set; }
 
+        private void OnFormClosing(object sender, FormClosingEventArgs e)
+        {
+            _refreshTimer.Stop();
+            _root.Stop();
+        }
+
 
         public void ShowPictures()
         {
+            var cursor = _form.Cursor;
+            _form.Cursor=Cursors.WaitCursor;
             using (PictureViewerForm pictureViewerForm = CreatePictureViewForm())
             {
-                SetupForm(pictureViewerForm,null);
+                UpdateStatusBar();
+                SetupForm(pictureViewerForm, null);
                 pictureViewerForm.ShowDialog();
                 _slideshowFiles = null;
             }
             _pictureViewerForm = null;
+            UpdateStatusBar();
+            if (_form.Cursor == Cursors.WaitCursor)
+                _form.Cursor = cursor;
         }
 
-        private void SetupForm(PictureViewerForm pictureViewerForm,PictureFile startFile)
+        private void SetupForm(PictureViewerForm pictureViewerForm, PictureFile startFile)
         {
             _pictureViewerForm.Loop = Loop;
             _pictureViewerForm.DelayInSec = DelayInSec;
@@ -133,7 +151,9 @@ namespace SlideshowViewer
                     _slideshowFileIndex = pictureViewerForm.FileIndex;
                 }
                 pictureViewerForm.Files = new List<PictureFile>(GetSelectedFiles());
-                pictureViewerForm.FileIndex = startFile != null ? new List<PictureFile>(GetSelectedFiles()).IndexOf(startFile) : 0;
+                pictureViewerForm.FileIndex = startFile != null
+                                                  ? new List<PictureFile>(GetSelectedFiles()).IndexOf(startFile)
+                                                  : 0;
             }
             else
             {
@@ -190,7 +210,7 @@ namespace SlideshowViewer
         private void ToggleBrowsing(PictureFile file)
         {
             Browse = !Browse;
-            SetupForm(_pictureViewerForm,file);
+            SetupForm(_pictureViewerForm, file);
         }
 
 
@@ -207,50 +227,58 @@ namespace SlideshowViewer
 
         private void UpdateFilter()
         {
-            decimal minFileSize = MinFileSize;
-            decimal modifiedAfter = ModifiedAfter;
-            Func<PictureFile, bool> filter = delegate(PictureFile file)
+            if (_root != null)
             {
-                if (file.FileSize < minFileSize)
-                    return false;
+                decimal minFileSize = MinFileSize;
+                decimal modifiedAfter = ModifiedAfter;
+                Func<PictureFile, bool> filter = delegate(PictureFile file)
+                    {
+                        if (file.FileSize < minFileSize)
+                            return false;
 
-                if (modifiedAfter > 0 &&
-                    DateTime.Now.AddSeconds((double)(0 - modifiedAfter)).CompareTo(file.ModifiedDate) > 0)
-                    return false;
+                        if (modifiedAfter > 0 &&
+                            DateTime.Now.AddSeconds((double) (0 - modifiedAfter)).CompareTo(file.ModifiedDate) > 0)
+                            return false;
 
-                return true;
-            };
-            foreach (object o in _form.directoryTreeView.Objects)
-            {
-                ((FileGroup)o).Filter = filter;
+                        return true;
+                    };
+                _root.Filter = filter;
             }
         }
 
         private void ModifiedAfterSuffixOnSelectedValueChanged(object sender, EventArgs eventArgs)
         {
-            ModifiedAfter = _form.modifiedAfter.Value * ((LabelledInt)_form.modifiedAfterSuffix.SelectedItem).Value;
+            ModifiedAfter = _form.modifiedAfter.Value*((LabelledInt) _form.modifiedAfterSuffix.SelectedItem).Value;
             RefreshTree();
         }
 
         private void RefreshTree()
         {
+            ListViewItem item = _form.directoryTreeView.FocusedItem;
             _form.directoryTreeView.RebuildAll(true);
+            try
+            {
+                _form.directoryTreeView.FocusedItem = item;
+            }
+            catch (Exception)
+            {
+            }
             _form.directoryTreeView.Sort();
-            _form.Total.AutoResize(ColumnHeaderAutoResizeStyle.ColumnContent);
-            _form.Total.Width = Math.Max(20 + _form.Total.Width, 100);
         }
 
         private void MinSizeOnValueChanged(object sender, EventArgs eventArgs)
         {
-            MinFileSize = _form.minSize.Value * ((LabelledInt)_form.minSizeSuffix.SelectedItem).Value;
+            MinFileSize = _form.minSize.Value*((LabelledInt) _form.minSizeSuffix.SelectedItem).Value;
             RefreshTree();
         }
 
         private void OnFormShown(object sender, EventArgs eventArgs)
         {
+            _form.Cursor = Cursors.AppStarting;
+            UpdateStatusBar();
             foreach (object item in _form.minSizeSuffix.Items)
             {
-                decimal value = _minFileSize / ((LabelledInt)item).Value;
+                decimal value = _minFileSize/((LabelledInt) item).Value;
                 if (value < 1024)
                 {
                     _form.minSize.Value = value;
@@ -258,11 +286,67 @@ namespace SlideshowViewer
                     break;
                 }
             }
+            if (AutoRun)
+            {
+                _form.directoryTreeView.ForeColor = Color.FromName(KnownColor.InactiveCaptionText.ToString());
+            }
             UpdateFilter();
             RefreshTree();
             _form.directoryTreeView.SelectObject(_form.directoryTreeView.Objects.Cast<FileGroup>().First());
+
+            _root.OnScanningDone = delegate { _form.BeginInvoke(new MethodInvoker(OnScanningDone)); };
+            _refreshTimer = new Timer(1000);
+            _refreshTimer.SynchronizingObject = _form;
+            _refreshTimer.AutoReset = true;
+            _refreshTimer.Elapsed += delegate
+                {
+                    if (ScanningDirectoryFileGroup.Changed)
+                    {
+                        UpdateFilter();
+                        RefreshTree();
+                    }
+                };
+            _refreshTimer.Start();
+        }
+
+
+        private void UpdateStatusBar()
+        {
+            string text = "";
+            var items = new List<string>();
+            if (_isScanning)
+                items.Add("Scanning directories");
+            if (AutoRun)
+                items.Add("Will start slideshow when scanning is done");
+            if (_pictureViewerForm != null)
+                items.Add("Starting viewer");
+            foreach (var item in items)
+            {
+                if (!text.IsEmpty())
+                    text += " - ";
+                text += item;
+            }
+            _form.statusBar.Text = text;
+            _form.throbber.Visible = !text.IsEmpty();
+            _form.statusBar.Invalidate();
+            _form.statusBar.Update();
+        }
+
+        private void OnScanningDone()
+        {
+            _form.statusBar.Text = "";
+            _form.directoryTreeView.BackColor = Color.White;
+            _form.directoryTreeView.ForeColor = Color.FromName(KnownColor.WindowText.ToString());
+            _form.Cursor = Cursors.Default;
+            _isScanning = false;
+            UpdateFilter();
+            RefreshTree();
+            UpdateStatusBar();
             if (AutoRun)
             {
+                AutoRun = false;
+                _form.directoryTreeView.SelectedObject = _root;
+                _form.Update();
                 ShowPictures();
             }
         }
@@ -272,14 +356,26 @@ namespace SlideshowViewer
         {
             return
                 _form.directoryTreeView.SelectedObjects.Cast<FileGroup>()
-                                 .SelectMany(directory => directory.GetFilesRecursive());
+                     .SelectMany(directory => directory.GetFilesRecursive());
         }
 
         private void DirectoryTreeViewOnItemActivate(object sender, EventArgs eventArgs)
         {
-            ShowPictures();
+            if (_root.GetNumberOfFiles() > 0 && !AutoRun)
+                ShowPictures();
         }
 
+
+        public void Run()
+        {
+            Application.Run(_form);
+        }
+
+        public void SetRoot(RootFileGroup root)
+        {
+            _root = root;
+            _form.directoryTreeView.Objects = new[] {root};
+        }
 
         private class LabelledInt
         {
@@ -296,16 +392,6 @@ namespace SlideshowViewer
             {
                 return Text;
             }
-        }
-
-        public void Run()
-        {
-            Application.Run(_form);
-        }
-
-        public void SetRoot(FileGroup root)
-        {
-            _form.directoryTreeView.Objects = new[] {root};
         }
     }
 }

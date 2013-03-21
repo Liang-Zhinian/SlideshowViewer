@@ -78,6 +78,16 @@ namespace SlideshowViewer
             return ret.Values;
         }
 
+        public static bool IsEmpty<T>(this ICollection<T> items)
+        {
+            return items.Count == 0;
+        }
+
+        public static bool IsEmpty(this string s)
+        {
+            return s.Length == 0;
+        }
+
         public static List<T> GetRange<T>(this List<T> l, int index)
         {
             return l.GetRange(index, l.Count - index);

@@ -33,35 +33,13 @@ namespace SlideshowViewer
             splashScreen.Show();
             Application.DoEvents();
             _directoryTreeForm = new DirectoryTree();
-            AddToFolderContextMenu();
+            //AddToFolderContextMenu();
 
             ReadDefaultConfig();
             ReadConfiguration(args);
-            CancellationTokenSource cancellationTokenSource=new CancellationTokenSource();
-            Action<long> progress = delegate(long l)
-                {
-                    splashScreen.BeginInvoke(new MethodInvoker(delegate
-                        {
-                            splashScreen.numberOfFilesScanned.Text = string.Format("{0:n0}", l);
-                        }));
-                };
-            var scanFilesTask = new Task<FileGroup>(() => _fileScanner.GetRoot(cancellationTokenSource.Token,progress));
-            splashScreen.Closed += (sender, eventArgs) => cancellationTokenSource.Cancel();
-            scanFilesTask.Start();
-            while (!scanFilesTask.IsCompleted)
-            {
-                Application.DoEvents();
-            }
-            try
-            {
-                _directoryTreeForm.SetRoot(scanFilesTask.Result);
-            }
-            catch (AggregateException e)
-            {
-                if (e.InnerException is OperationCanceledException)
-                    return;
-                throw;
-            }
+            RootFileGroup fileGroup = _fileScanner.GetRoot();
+            fileGroup.StartScan();
+            _directoryTreeForm.SetRoot(fileGroup);
             splashScreen.Dispose();
             _directoryTreeForm.Run();
         }

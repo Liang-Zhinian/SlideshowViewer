@@ -9,6 +9,7 @@ namespace SlideshowViewer
     {
         private string _lowerLeftText;
         private string _lowerMiddleText;
+        private string _lowerRightText;
 
         public MyPictureBox()
         {
@@ -32,6 +33,16 @@ namespace SlideshowViewer
             set
             {
                 _lowerLeftText = value;
+                Invalidate();
+            }
+        }
+
+        public string LowerRightText
+        {
+            get { return _lowerRightText; }
+            set
+            {
+                _lowerRightText = value;
                 Invalidate();
             }
         }
@@ -67,12 +78,19 @@ namespace SlideshowViewer
                 DrawText(graphic, LowerMiddleText, stringFormat,
                          rect => new PointF((Bounds.Width - rect.Width)/2, Bounds.Height - rect.Height));
             }
+            if (LowerRightText != null)
+            {
+                var stringFormat = new StringFormat(StringFormat.GenericDefault);
+                stringFormat.LineAlignment = StringAlignment.Far;
+                DrawText(graphic, LowerRightText, stringFormat,
+                         rect => new PointF((Bounds.Width - rect.Width), Bounds.Height - rect.Height));
+            }
         }
 
         private void DrawText(Graphics graphic, string text, StringFormat stringFormat, PlaceText placeText)
         {
             Brush brush = new SolidBrush(Color.FromArgb(OverlayAlpha, 0, 0, 0));
-            SizeF sizeF = graphic.MeasureString(text, OverlayFont, Bounds.Width/2, stringFormat);
+            SizeF sizeF = graphic.MeasureString(text, OverlayFont, Bounds.Width/3, stringFormat);
             var rect = new RectangleF(0, 0, sizeF.Width, sizeF.Height);
             rect.Location = placeText(rect);
             graphic.FillRectangle(brush, rect);
