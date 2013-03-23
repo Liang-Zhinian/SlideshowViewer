@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using SlideshowViewer.FileGroup;
 using SlideshowViewer.Properties;
 using Timer = System.Timers.Timer;
 
@@ -23,7 +24,7 @@ namespace SlideshowViewer
         public DirectoryTree()
         {
             ResumeManager = new DummyResumeManager();
-            Shuffle = false;
+            Shuffle = true;
             Loop = true;
             DelayInSec = 15;
             OverlayText =
@@ -32,13 +33,13 @@ namespace SlideshowViewer
             AutoRun = true;
 
 
-            _form.directoryTreeView.CanExpandGetter = FileGroup.CanExpandGetter;
-            _form.directoryTreeView.ChildrenGetter = FileGroup.ChildrenGetter;
+            _form.directoryTreeView.CanExpandGetter = FileGroup.FileGroup.CanExpandGetter;
+            _form.directoryTreeView.ChildrenGetter = FileGroup.FileGroup.ChildrenGetter;
             _form.directoryTreeView.ItemActivate += DirectoryTreeViewOnItemActivate;
             _form.directoryTreeView.KeyPress +=
                 delegate(object sender, KeyPressEventArgs args) { args.Handled = args.KeyChar == '\r'; };
 
-            _form.Total.AspectGetter = rowObject => ((FileGroup) rowObject).GetNumberOfFiles();
+            _form.Total.AspectGetter = rowObject => ((FileGroup.FileGroup) rowObject).GetNumberOfFiles();
             _form.minSize.ValueChanged += MinSizeOnValueChanged;
             _form.minSizeSuffix.SelectedValueChanged += MinSizeOnValueChanged;
             _form.minSizeSuffix.Items.Clear();
@@ -61,9 +62,36 @@ namespace SlideshowViewer
             _form.modifiedAfter.ValueChanged += ModifiedAfterSuffixOnSelectedValueChanged;
             _form.Shown += OnFormShown;
             _form.FormClosing += OnFormClosing;
+            _form.directoryTreeView.AllowDrop = true;
+            _form.directoryTreeView.DragEnter += delegate(object sender, DragEventArgs args)
+                {
+                    if (args.Data.GetDataPresent(DataFormats.FileDrop))
+                        args.Effect = DragDropEffects.Copy;
+                    else
+                        args.Effect = DragDropEffects.None;
+                };
+            _form.directoryTreeView.DragDrop += delegate(object sender, DragEventArgs args)
+                {
+                    try
+                    {
+                        var a = (Array) args.Data.GetData(DataFormats.FileDrop);
+
+                        _form.BeginInvoke(new MethodInvoker(delegate
+                            {
+                                foreach (object fileName in a)
+                                {
+                                    _root.Add(fileName.ToString());
+                                }
+                                _form.directoryTreeView.Expand(_root);
+                            }));
+                    }
+                    catch (Exception)
+                    {
+                    }
+                };
         }
 
-        public ResumeManager ResumeManager { get; set; }
+        public IResumeManager ResumeManager { get; set; }
 
         public bool Shuffle
         {
@@ -123,8 +151,10 @@ namespace SlideshowViewer
 
         public void ShowPictures()
         {
-            var cursor = _form.Cursor;
-            _form.Cursor=Cursors.WaitCursor;
+            if (GetNumberOfSelectedFiles() == 0)
+                return;
+            Cursor cursor = _form.Cursor;
+            _form.Cursor = Cursors.WaitCursor;
             using (PictureViewerForm pictureViewerForm = CreatePictureViewForm())
             {
                 UpdateStatusBar();
@@ -137,6 +167,7 @@ namespace SlideshowViewer
             if (_form.Cursor == Cursors.WaitCursor)
                 _form.Cursor = cursor;
         }
+
 
         private void SetupForm(PictureViewerForm pictureViewerForm, PictureFile startFile)
         {
@@ -196,8 +227,8 @@ namespace SlideshowViewer
             pictureFiles = new List<PictureFile>();
             if (Shuffle)
             {
-                pictureFiles.AddRange(shownFiles.Shuffle());
-                pictureFiles.AddRange(notShownFiles.Shuffle());
+                pictureFiles.AddRange(shownFiles.GetShuffled());
+                pictureFiles.AddRange(notShownFiles.GetShuffled());
             }
             else
             {
@@ -292,18 +323,19 @@ namespace SlideshowViewer
             }
             UpdateFilter();
             RefreshTree();
-            _form.directoryTreeView.SelectObject(_form.directoryTreeView.Objects.Cast<FileGroup>().First());
+            _form.directoryTreeView.SelectObject(_form.directoryTreeView.Objects.Cast<FileGroup.FileGroup>().First());
 
             _root.OnScanningDone = delegate { _form.BeginInvoke(new MethodInvoker(OnScanningDone)); };
-            _refreshTimer = new Timer(1000);
+            _refreshTimer = new Timer(500);
             _refreshTimer.SynchronizingObject = _form;
             _refreshTimer.AutoReset = true;
             _refreshTimer.Elapsed += delegate
                 {
-                    if (ScanningDirectoryFileGroup.Changed)
+                    if (FileGroup.FileGroup.Changed)
                     {
                         UpdateFilter();
                         RefreshTree();
+                        UpdateStatusBar();
                     }
                 };
             _refreshTimer.Start();
@@ -313,21 +345,29 @@ namespace SlideshowViewer
         private void UpdateStatusBar()
         {
             string text = "";
-            var items = new List<string>();
-            if (_isScanning)
-                items.Add("Scanning directories");
-            if (AutoRun)
-                items.Add("Will start slideshow when scanning is done");
-            if (_pictureViewerForm != null)
-                items.Add("Starting viewer");
-            foreach (var item in items)
+            if (!_isScanning && _root.GetNumberOfFiles() == 0)
             {
-                if (!text.IsEmpty())
-                    text += " - ";
-                text += item;
+                text = "No files found. Drag and drop folders and files int filearea to view.";
+                _form.throbber.Visible = false;
+            }
+            else
+            {
+                var items = new List<string>();
+                if (_isScanning)
+                    items.Add("Scanning directories");
+                if (AutoRun)
+                    items.Add("Will start slideshow when scanning is done");
+                if (_pictureViewerForm != null)
+                    items.Add("Starting viewer");
+                foreach (string item in items)
+                {
+                    if (!text.IsEmpty())
+                        text += " - ";
+                    text += item;
+                }
+                _form.throbber.Visible = !text.IsEmpty();
             }
             _form.statusBar.Text = text;
-            _form.throbber.Visible = !text.IsEmpty();
             _form.statusBar.Invalidate();
             _form.statusBar.Update();
         }
@@ -348,20 +388,28 @@ namespace SlideshowViewer
                 _form.directoryTreeView.SelectedObject = _root;
                 _form.Update();
                 ShowPictures();
+                UpdateStatusBar();
             }
         }
 
 
+        private decimal GetNumberOfSelectedFiles()
+        {
+            return
+                _form.directoryTreeView.SelectedObjects.Cast<FileGroup.FileGroup>()
+                     .Sum(directory => directory.GetNumberOfFiles());
+        }
+
         private IEnumerable<PictureFile> GetSelectedFiles()
         {
             return
-                _form.directoryTreeView.SelectedObjects.Cast<FileGroup>()
+                _form.directoryTreeView.SelectedObjects.Cast<FileGroup.FileGroup>()
                      .SelectMany(directory => directory.GetFilesRecursive());
         }
 
         private void DirectoryTreeViewOnItemActivate(object sender, EventArgs eventArgs)
         {
-            if (_root.GetNumberOfFiles() > 0 && !AutoRun)
+            if (!AutoRun)
                 ShowPictures();
         }
 
@@ -376,6 +424,8 @@ namespace SlideshowViewer
             _root = root;
             _form.directoryTreeView.Objects = new[] {root};
         }
+
+        #region Nested type: LabelledInt
 
         private class LabelledInt
         {
@@ -393,5 +443,7 @@ namespace SlideshowViewer
                 return Text;
             }
         }
+
+        #endregion
     }
 }

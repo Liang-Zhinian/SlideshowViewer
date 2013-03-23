@@ -72,40 +72,43 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="FileGroup.cs" />
-    <Compile Include="DirectoryTree.cs" />
-    <Compile Include="DirectoryTreeForm.cs">
+    <Compile Include="code\FileGroup\FileGroup.cs" />
+    <Compile Include="code\DirectoryTree\DirectoryTree.cs" />
+    <Compile Include="code\DirectoryTree\DirectoryTreeForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="DirectoryTreeForm.Designer.cs">
+    <Compile Include="code\DirectoryTree\DirectoryTreeForm.Designer.cs">
       <DependentUpon>DirectoryTreeForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="FileAssociation.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="FileScanner.cs" />
-    <Compile Include="MyPictureBox.cs">
+    <Compile Include="code\FileGroup\RootFileGroup.cs" />
+    <Compile Include="code\FileGroup\DirectoryTreeFileGroup.cs" />
+    <Compile Include="code\ResumeManager\DummyResumeManager.cs" />
+    <Compile Include="code\ResumeManager\FileResumeManager.cs" />
+    <Compile Include="code\Unimportant\FileAssociation.cs" />
+    <Compile Include="code\Extensions.cs" />
+    <Compile Include="code\PictureViewer\MyPictureBox.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="PictureFile.cs" />
-    <Compile Include="PictureViewerForm.cs">
+    <Compile Include="code\PictureFile.cs" />
+    <Compile Include="code\PictureViewer\PictureViewerForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="PictureViewerForm.Designer.cs">
+    <Compile Include="code\PictureViewer\PictureViewerForm.Designer.cs">
       <DependentUpon>PictureViewerForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Program.cs" />
+    <Compile Include="code\Program\Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ResumeManager.cs" />
-    <Compile Include="SplashScreen.cs">
+    <Compile Include="code\ResumeManager\IResumeManager.cs" />
+    <Compile Include="code\Unimportant\SplashScreen.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="SplashScreen.Designer.cs">
+    <Compile Include="code\Unimportant\SplashScreen.Designer.cs">
       <DependentUpon>SplashScreen.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="DirectoryTreeForm.resx">
+    <EmbeddedResource Include="code\DirectoryTree\DirectoryTreeForm.resx">
       <DependentUpon>DirectoryTreeForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="PictureViewerForm.resx">
+    <EmbeddedResource Include="code\PictureViewer\PictureViewerForm.resx">
       <DependentUpon>PictureViewerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
@@ -118,7 +121,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <EmbeddedResource Include="SplashScreen.resx">
+    <EmbeddedResource Include="code\Unimportant\SplashScreen.resx">
       <DependentUpon>SplashScreen.cs</DependentUpon>
     </EmbeddedResource>
     <None Include="packages.config" />
@@ -165,6 +168,7 @@
       <Name>ObjectListView2010</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

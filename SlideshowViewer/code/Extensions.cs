@@ -56,7 +56,7 @@ namespace SlideshowViewer
             return true;
         }
 
-        public static IEnumerable<T> Shuffle<T>(this IEnumerable<T> items)
+        public static IEnumerable<T> GetShuffled<T>(this IEnumerable<T> items)
         {
             var ret = new SortedDictionary<double, T>();
             var r = new Random();
@@ -78,6 +78,13 @@ namespace SlideshowViewer
             return ret.Values;
         }
 
+        public static IEnumerable<T> GetSorted<T>(this IEnumerable<T> items)
+        {
+            var ret = new SortedSet<T>();
+            ret.AddAll(items);
+            return ret;
+        }
+
         public static bool IsEmpty<T>(this ICollection<T> items)
         {
             return items.Count == 0;
@@ -91,6 +98,38 @@ namespace SlideshowViewer
         public static List<T> GetRange<T>(this List<T> l, int index)
         {
             return l.GetRange(index, l.Count - index);
+        }
+
+        public static void AddAll<T>(this ICollection<T> collection, IEnumerable<T> items)
+        {
+            foreach (var item in items)
+            {
+                collection.Add(item);
+            }
+        }
+
+        public static T Largest<T>(this IEnumerable<T> items, Comparison<T> comparer) where T : class
+        {
+            T largest=null;
+            foreach (var item in items)
+            {
+                if (largest == null || comparer(largest, item) > 0)
+                    largest = item;
+            }
+            return largest;
+        }
+
+        public static IEnumerable<T> MergeSorted<T>(Comparison<T> comparer,params IEnumerable<T>[] input) where T:class 
+        {
+            var all=new List<IEnumerator<T>>(input.Select(enumerable => enumerable.GetEnumerator()));
+            all.RemoveAll(enumerator => !enumerator.MoveNext());
+            while (!all.IsEmpty())
+            {
+                var largest = all.Largest((enumerator, enumerator1) => comparer(enumerator.Current, enumerator1.Current));
+                yield return largest.Current;
+                if (!largest.MoveNext())
+                    all.Remove(largest);
+            }
         }
 
     }

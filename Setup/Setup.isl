@@ -1070,6 +1070,7 @@
 		<row><td>ISSelfRegisterCosting</td><td>1</td><td>ISSELFREG.DLL</td><td>ISSelfRegisterCosting</td><td/><td/></row>
 		<row><td>ISSelfRegisterFiles</td><td>3073</td><td>ISSELFREG.DLL</td><td>ISSelfRegisterFiles</td><td/><td/></row>
 		<row><td>ISSelfRegisterFinalize</td><td>1</td><td>ISSELFREG.DLL</td><td>ISSelfRegisterFinalize</td><td/><td/></row>
+		<row><td>ISSetAllUsers</td><td>257</td><td>SetAllUsers.dll</td><td>SetAllUsers</td><td/><td/></row>
 		<row><td>ISUnSelfRegisterFiles</td><td>3073</td><td>ISSELFREG.DLL</td><td>ISUnSelfRegisterFiles</td><td/><td/></row>
 		<row><td>LaunchProgramFileFromSetupCompleteSuccess</td><td>1</td><td>NewBinary19</td><td>LaunchProgram</td><td/><td/></row>
 		<row><td>SetARPINSTALLLOCATION</td><td>51</td><td>ARPINSTALLLOCATION</td><td>[INSTALLDIR]</td><td/><td/></row>
@@ -1145,7 +1146,7 @@
 		<row><td>FavoritesFolder</td><td>TARGETDIR</td><td>.:FAVORI~1|Favorites</td><td/><td>0</td><td/></row>
 		<row><td>FontsFolder</td><td>TARGETDIR</td><td>.:Fonts</td><td/><td>0</td><td/></row>
 		<row><td>GlobalAssemblyCache</td><td>TARGETDIR</td><td>.:Global~1|GlobalAssemblyCache</td><td/><td>0</td><td/></row>
-		<row><td>INSTALLDIR</td><td>SLIDESHOW_VIEWER</td><td>.</td><td/><td>0</td><td/></row>
+		<row><td>INSTALLDIR</td><td>SLIDESHOWVIEWER</td><td>.</td><td/><td>0</td><td/></row>
 		<row><td>ISCommonFilesFolder</td><td>CommonFilesFolder</td><td>Instal~1|InstallShield</td><td/><td>0</td><td/></row>
 		<row><td>ISMyCompanyDir</td><td>ProgramFilesFolder</td><td>MYCOMP~1|My Company Name</td><td/><td>0</td><td/></row>
 		<row><td>ISMyProductDir</td><td>ISMyCompanyDir</td><td>MYPROD~1|My Product Name</td><td/><td>0</td><td/></row>
@@ -1160,6 +1161,7 @@
 		<row><td>ProgramFilesFolder</td><td>TARGETDIR</td><td>.:PROGRA~1|program files</td><td/><td>0</td><td/></row>
 		<row><td>ProgramMenuFolder</td><td>TARGETDIR</td><td>.:Programs</td><td/><td>3</td><td/></row>
 		<row><td>RecentFolder</td><td>TARGETDIR</td><td>.:Recent</td><td/><td>0</td><td/></row>
+		<row><td>SLIDESHOWVIEWER</td><td>ProgramFilesFolder</td><td>SLIDES~1|SlideshowViewer</td><td/><td>0</td><td/></row>
 		<row><td>SLIDESHOW_VIEWER</td><td>ProgramFilesFolder</td><td>SLIDES~1|Slideshow Viewer</td><td/><td>0</td><td/></row>
 		<row><td>SendToFolder</td><td>TARGETDIR</td><td>.:SendTo</td><td/><td>3</td><td/></row>
 		<row><td>StartMenuFolder</td><td>TARGETDIR</td><td>.:STARTM~1|Start Menu</td><td/><td>3</td><td/></row>
@@ -1847,6 +1849,7 @@
 		<row><td>NewExtension2</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
 		<row><td>NewExtension3</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
 		<row><td>NewExtension4</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
+		<row><td>NewExtension5</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
 		<row><td>ssv</td><td>SlideshowViewer.Primary_output</td><td>SlideshowViewer.File</td><td/><td>AlwaysInstall</td></row>
 	</table>
 
@@ -2775,7 +2778,7 @@
 		<col def="I2">Encoded</col>
 		<col def="S0">Comment</col>
 		<col def="I4">TimeStamp</col>
-		<row><td>COMPANY_NAME</td><td>1033</td><td>Nemosoft</td><td>0</td><td/><td>1638001538</td></row>
+		<row><td>COMPANY_NAME</td><td>1033</td><td>Atle Slagsvold</td><td>0</td><td/><td>-1314826239</td></row>
 		<row><td>DN_AlwaysInstall</td><td>1033</td><td>Always Install</td><td>0</td><td/><td>1637972482</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_COLOR</td><td>1033</td><td>The color settings of your system are not adequate for running [ProductName].</td><td>0</td><td/><td>1637972482</td></row>
 		<row><td>IDPROP_EXPRESS_LAUNCH_CONDITION_DOTNETVERSION45FULL</td><td>1033</td><td>Microsoft .NET Framework 4.5 Full package or greater needs to be installed for this installation to continue.</td><td>0</td><td/><td>1637990946</td></row>
@@ -3877,8 +3880,7 @@
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>1637972482</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>1637972482</td></row>
 		<row><td>ID_STRING1</td><td>1033</td><td/><td>0</td><td/><td>1637972482</td></row>
-		<row><td>ID_STRING2</td><td>1033</td><td>http://www.Nemosoft.com</td><td>0</td><td/><td>1638001538</td></row>
-		<row><td>ID_STRING3</td><td>1033</td><td>Nemosoft</td><td>0</td><td/><td>1638001538</td></row>
+		<row><td>ID_STRING3</td><td>1033</td><td>Atle Slagsvold</td><td>0</td><td/><td>-1314799776</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>1033</td><td>This feature will remain uninstalled.</td><td>0</td><td/><td>1637972482</td></row>
 		<row><td>NEW_STRING1</td><td>1033</td><td>ssv</td><td>0</td><td/><td>-1449020297</td></row>
 		<row><td>NEW_STRING2</td><td>1033</td><td>Folder</td><td>0</td><td/><td>-1449065129</td></row>
@@ -4036,6 +4038,7 @@
 		<row><td>ISSelfRegisterCosting</td><td/><td>2201</td><td/><td/></row>
 		<row><td>ISSelfRegisterFiles</td><td/><td>5601</td><td/><td/></row>
 		<row><td>ISSelfRegisterFinalize</td><td/><td>6601</td><td/><td/></row>
+		<row><td>ISSetAllUsers</td><td>Not Installed</td><td>10</td><td/><td/></row>
 		<row><td>ISUnSelfRegisterFiles</td><td/><td>2202</td><td/><td/></row>
 		<row><td>InstallFiles</td><td/><td>4000</td><td>InstallFiles</td><td/></row>
 		<row><td>InstallFinalize</td><td/><td>6600</td><td>InstallFinalize</td><td/></row>
@@ -4123,7 +4126,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>ISTheme</td><td>InstallShield Blue.theme</td></row>
 		<row><td>ISUSLock</td><td>{A31092E1-FCFF-4A1E-85BD-6E1883CCD0A8}</td></row>
 		<row><td>ISUSSignature</td><td>{4F77B654-B8C7-49D5-99F5-81550364EBEC}</td></row>
-		<row><td>ISVisitedViews</td><td>viewAssistant,viewAppFiles,viewFeatureFiles,viewDependencies,viewDesignPatches,viewSystemSearch,viewInstallScriptStd,viewCustomActions,viewSupportFiles,viewISToday,viewShortcuts,viewProject,viewUpgradePaths,viewObjects,viewRegistry,viewIniFiles,viewFileExtensions,viewUI,viewTextMessages,viewRelease,viewSetupDesign,viewUpdateService</td></row>
+		<row><td>ISVisitedViews</td><td>viewAssistant,viewAppFiles,viewFeatureFiles,viewDependencies,viewDesignPatches,viewSystemSearch,viewInstallScriptStd,viewCustomActions,viewSupportFiles,viewISToday,viewShortcuts,viewProject,viewUpgradePaths,viewObjects,viewRegistry,viewIniFiles,viewFileExtensions,viewUI,viewTextMessages,viewRelease,viewSetupDesign,viewUpdateService,viewSetupTypes,viewRealSetupDesign</td></row>
 		<row><td>Limited</td><td>1</td></row>
 		<row><td>LockPermissionMode</td><td>1</td></row>
 		<row><td>MsiExecCmdLineOptions</td><td/></row>
@@ -4153,6 +4156,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>FileCost</td><td/><td>900</td><td>FileCost</td><td/></row>
 		<row><td>FindRelatedProducts</td><td/><td>430</td><td>FindRelatedProducts</td><td/></row>
 		<row><td>ISPreventDowngrade</td><td>ISFOUNDNEWERPRODUCTVERSION</td><td>450</td><td>ISPreventDowngrade</td><td/></row>
+		<row><td>ISSetAllUsers</td><td>Not Installed</td><td>10</td><td/><td/></row>
 		<row><td>InstallWelcome</td><td>Not Installed</td><td>1210</td><td>InstallWelcome</td><td/></row>
 		<row><td>IsolateComponents</td><td/><td>950</td><td>IsolateComponents</td><td/></row>
 		<row><td>LaunchConditions</td><td>Not Installed</td><td>410</td><td>LaunchConditions</td><td/></row>
@@ -4433,7 +4437,6 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>ARPINSTALLLOCATION</td><td/><td/></row>
 		<row><td>ARPPRODUCTICON</td><td>ARPPRODUCTICON.exe</td><td/></row>
 		<row><td>ARPSIZE</td><td/><td/></row>
-		<row><td>ARPURLINFOABOUT</td><td>##ID_STRING2##</td><td/></row>
 		<row><td>AgreeToLicense</td><td>No</td><td/></row>
 		<row><td>ApplicationUsers</td><td>AllUsers</td><td/></row>
 		<row><td>DWUSINTERVAL</td><td>30</td><td/></row>
@@ -4501,7 +4504,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>PROGMSG_IIS_ROLLBACKVROOTS</td><td>##IDS_PROGMSG_IIS_ROLLBACKVROOTS##</td><td/></row>
 		<row><td>PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS</td><td>##IDS_PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS##</td><td/></row>
 		<row><td>PROGRAMFILETOLAUNCHATEND</td><td>[INSTALLDIR]SlideshowViewer.Primary output</td><td/></row>
-		<row><td>ProductCode</td><td>{482FBD94-50EE-466F-9B53-851578DF9FF5}</td><td/></row>
+		<row><td>ProductCode</td><td>{41B07BF8-8FD0-4306-BB57-5CF29F917151}</td><td/></row>
 		<row><td>ProductName</td><td>Slideshow Viewer</td><td/></row>
 		<row><td>ProductVersion</td><td>1.00.0000</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
@@ -4516,7 +4519,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>SERIALNUMBER</td><td/><td/></row>
 		<row><td>SERIALNUMVALSUCCESSRETVAL</td><td>1</td><td/></row>
 		<row><td>SHOWLAUNCHPROGRAM</td><td>-1</td><td/></row>
-		<row><td>SecureCustomProperties</td><td>ISFOUNDNEWERPRODUCTVERSION;USERNAME;COMPANYNAME;ISX_SERIALNUM;SUPPORTDIR;DOTNETVERSION45FULL</td><td/></row>
+		<row><td>SecureCustomProperties</td><td>ISFOUNDNEWERPRODUCTVERSION;USERNAME;COMPANYNAME;ISX_SERIALNUM;SUPPORTDIR;DOTNETVERSION45FULL;ISACTIONPROP1</td><td/></row>
 		<row><td>SelectedSetupType</td><td>##IDS__DisplayName_Typical##</td><td/></row>
 		<row><td>SetupType</td><td>Typical</td><td/></row>
 		<row><td>UpgradeCode</td><td>{6D9FD511-1318-4E7A-80BD-7EC2AF09105C}</td><td/></row>
@@ -4573,8 +4576,8 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="s72">Component_</col>
 		<col def="I4">ISAttributes</col>
 		<row><td>Registry1</td><td>0</td><td>Folder\shell\SlideshowViewer</td><td/><td>Show slideshow</td><td>ISX_DEFAULTCOMPONENT1</td><td>0</td></row>
-		<row><td>Registry2</td><td>0</td><td>Folder\shell\SlideshowViewer</td><td>Icon</td><td>[INSTALLDIR]</td><td>ISX_DEFAULTCOMPONENT1</td><td>0</td></row>
-		<row><td>Registry3</td><td>0</td><td>Folder\shell\SlideshowViewer\command</td><td/><td>"C:\Program Files\Sandboxie\Start.exe" /box:__ask__ "C:\Windows\explorer.exe" "%1"</td><td>ISX_DEFAULTCOMPONENT1</td><td>0</td></row>
+		<row><td>Registry2</td><td>0</td><td>Folder\shell\SlideshowViewer</td><td>Icon</td><td>"[INSTALLDIR]SlideshowViewer.exe"</td><td>ISX_DEFAULTCOMPONENT1</td><td>0</td></row>
+		<row><td>Registry3</td><td>0</td><td>Folder\shell\SlideshowViewer\command</td><td/><td>"[INSTALLDIR]SlideshowViewer.exe" "load=%1"</td><td>ISX_DEFAULTCOMPONENT1</td><td>0</td></row>
 	</table>
 
 	<table name="RemoveFile">
@@ -4794,6 +4797,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="s72">ActionProperty</col>
 		<col def="S72">ISDisplayName</col>
 		<row><td>{00000000-0000-0000-0000-000000000000}</td><td>***ALL_VERSIONS***</td><td></td><td></td><td>2</td><td/><td>ISFOUNDNEWERPRODUCTVERSION</td><td>ISPreventDowngrade</td></row>
+		<row><td>{6D9FD511-1318-4E7A-80BD-7EC2AF09105C}</td><td>1.00.0000</td><td>1.00.0000</td><td>1033</td><td>256</td><td/><td>ISACTIONPROP1</td><td>Upgrade</td></row>
 	</table>
 
 	<table name="Verb">

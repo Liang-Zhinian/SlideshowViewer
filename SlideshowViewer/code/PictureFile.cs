@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -9,12 +10,18 @@ using ExifLib;
 
 namespace SlideshowViewer
 {
-    public class PictureFile
+    public class PictureFile : IComparable<PictureFile>
     {
         private readonly FileInfo _fileInfo;
         private bool? _animatedGif;
         private ExifReader _exifReader;
         private Image _image;
+        private int _rotation = 0;
+
+        static PictureFile()
+        {
+            FileNamePatterns = ImageCodecInfo.GetImageEncoders().SelectMany(info => info.FilenameExtension.Split(';'));
+        }
 
         public PictureFile(FileInfo fileInfo)
         {
@@ -40,6 +47,13 @@ namespace SlideshowViewer
         {
             get { return _fileInfo.LastWriteTime; }
         }
+
+        public FileInfo FileInfo
+        {
+            get { return _fileInfo; }
+        }
+
+        public static IEnumerable<string> FileNamePatterns { get; private set; }
 
 
         public int GetOrientation()
@@ -140,8 +154,9 @@ namespace SlideshowViewer
                     if (_image.Height > maxSideSize || _image.Width > maxSideSize)
                     {
                         Image oldImage = _image;
-                        var scalefactor = Math.Min(maxSideSize / oldImage.Height, maxSideSize / oldImage.Width);
-                        _image = new Bitmap(oldImage, (int)Math.Round(oldImage.Width * scalefactor), (int)Math.Round(oldImage.Height * scalefactor));
+                        double scalefactor = Math.Min(maxSideSize/oldImage.Height, maxSideSize/oldImage.Width);
+                        _image = new Bitmap(oldImage, (int) Math.Round(oldImage.Width*scalefactor),
+                                            (int) Math.Round(oldImage.Height*scalefactor));
                         oldImage.Dispose();
                     }
 /*
@@ -178,7 +193,18 @@ namespace SlideshowViewer
                             _image.RotateFlip(RotateFlipType.Rotate270FlipNone);
                             break;
                     }
-
+                    switch (_rotation)
+                    {
+                        case 90:
+                            _image.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                            break;
+                        case 180:
+                            _image.RotateFlip(RotateFlipType.Rotate180FlipNone);
+                            break;
+                        case 270:
+                            _image.RotateFlip(RotateFlipType.Rotate270FlipNone);
+                            break;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -249,12 +275,52 @@ namespace SlideshowViewer
         public void RotateLeft()
         {
             GetImage().RotateFlip(RotateFlipType.Rotate270FlipNone);
+            _rotation -= 90;
+            _rotation = (_rotation+360)%360;
         }
 
         public void RotateRight()
         {
             GetImage().RotateFlip(RotateFlipType.Rotate90FlipNone);
+            _rotation += 90;
+            _rotation = (_rotation + 360) % 360;
         }
 
+        #region Comparison
+
+        public int CompareTo(PictureFile other)
+        {
+            return String.Compare(FileName.ToUpper(), other.FileName.ToUpper(), StringComparison.Ordinal);
+        }
+
+        protected bool Equals(PictureFile other)
+        {
+            return Equals(FileName.ToUpper(), other.FileName.ToUpper());
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            if (ReferenceEquals(this, obj)) return true;
+            if (obj.GetType() != GetType()) return false;
+            return Equals((PictureFile) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return FileName.ToUpper().GetHashCode();
+        }
+
+        public static bool operator ==(PictureFile left, PictureFile right)
+        {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(PictureFile left, PictureFile right)
+        {
+            return !Equals(left, right);
+        }
+
+        #endregion
     }
 }

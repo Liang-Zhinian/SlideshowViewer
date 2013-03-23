@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using SlideshowViewer.FileGroup;
 using SlideshowViewer.Properties;
 
 namespace SlideshowViewer
@@ -13,7 +14,7 @@ namespace SlideshowViewer
     internal static class Program
     {
         private static DirectoryTree _directoryTreeForm;
-        private static readonly FileScanner _fileScanner = new FileScanner();
+        private static RootFileGroup _root = new RootFileGroup();
 
         /// <summary>
         ///     The main entry point for the application.
@@ -37,9 +38,8 @@ namespace SlideshowViewer
 
             ReadDefaultConfig();
             ReadConfiguration(args);
-            RootFileGroup fileGroup = _fileScanner.GetRoot();
-            fileGroup.StartScan();
-            _directoryTreeForm.SetRoot(fileGroup);
+            _root.StartScan();
+            _directoryTreeForm.SetRoot(_root);
             splashScreen.Dispose();
             _directoryTreeForm.Run();
         }
@@ -122,16 +122,12 @@ namespace SlideshowViewer
                         case "loop":
                             _directoryTreeForm.Loop = Convert.ToBoolean(value);
                             break;
-                        case "file":
-                            if (!_fileScanner.AddFile(value))
-                                throw new ApplicationException("Not picture file " + value);
+                        case "load":
+                            if (!_root.Add(value))
+                                throw new ApplicationException("Can not load " + value);
                             break;
                         case "commandfile":
                             ReadConfiguration(File.ReadLines(value));
-                            break;
-                        case "scanRecursive":
-                        case "scan":
-                            _fileScanner.AddFolder(value);
                             break;
                         case "text":
                             _directoryTreeForm.OverlayText = value;
@@ -156,22 +152,11 @@ namespace SlideshowViewer
                             throw new ApplicationException("Unknown command " + cmd);
                     }
                 }
-                else if (Directory.Exists(arg))
+                else if (!_root.Add(arg))
                 {
-                    _fileScanner.AddFolder(arg);
-                }
-                else if (File.Exists(arg))
-                {
-                    if (_fileScanner.AddFile(arg))
-                    {
-                    }
-                    else if (Path.GetFileName(arg).MatchGlob("*.ssv"))
+                    if (Path.GetFileName(arg).MatchGlob("*.ssv"))
                         ReadConfiguration(File.ReadLines(arg));
-                    else throw new ApplicationException("Unknown file format " + arg);
-                }
-                else
-                {
-                    throw new ApplicationException("File not found " + arg);
+                    else throw new ApplicationException("Can not load " + arg);
                 }
             }
         }
