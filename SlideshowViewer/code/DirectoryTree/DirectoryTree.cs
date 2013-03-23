@@ -347,7 +347,7 @@ namespace SlideshowViewer
             string text = "";
             if (!_isScanning && _root.GetNumberOfFiles() == 0)
             {
-                text = "No files found. Drag and drop folders and files int filearea to view.";
+                text = "No files found. Drag and drop folders and files into file area to view.";
                 _form.throbber.Visible = false;
             }
             else

@@ -40,7 +40,8 @@ namespace SlideshowViewer.FileGroup
         {
             if (Directory.Exists(fileName))
             {
-                AddGroup(new DirectoryTreeFileGroup(fileName, new DirectoryInfo(fileName)));
+                var directoryInfo = new DirectoryInfo(fileName);
+                AddGroup(new DirectoryTreeFileGroup(directoryInfo.FullName, directoryInfo));
                 Changed = true;
                 return true;
             }

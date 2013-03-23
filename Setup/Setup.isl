@@ -4504,7 +4504,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<row><td>PROGMSG_IIS_ROLLBACKVROOTS</td><td>##IDS_PROGMSG_IIS_ROLLBACKVROOTS##</td><td/></row>
 		<row><td>PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS</td><td>##IDS_PROGMSG_IIS_ROLLBACKWEBSERVICEEXTENSIONS##</td><td/></row>
 		<row><td>PROGRAMFILETOLAUNCHATEND</td><td>[INSTALLDIR]SlideshowViewer.Primary output</td><td/></row>
-		<row><td>ProductCode</td><td>{41B07BF8-8FD0-4306-BB57-5CF29F917151}</td><td/></row>
+		<row><td>ProductCode</td><td>{6B660BCA-0B69-4129-86DE-88E7B92C3535}</td><td/></row>
 		<row><td>ProductName</td><td>Slideshow Viewer</td><td/></row>
 		<row><td>ProductVersion</td><td>1.00.0000</td><td/></row>
 		<row><td>ProgressType0</td><td>install</td><td/></row>
