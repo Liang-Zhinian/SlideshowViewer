@@ -52,7 +52,7 @@ namespace SlideshowViewer.FileGroup
             {
                 token.ThrowIfCancellationRequested();
                 files.Add(pictureFile);
-                if (files.Count > 1000)
+                if (files.Count > 999)
                 {
                     AddFiles(files);
                     files = new List<PictureFile>();

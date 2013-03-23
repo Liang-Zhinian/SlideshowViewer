@@ -8,7 +8,8 @@ namespace SlideshowViewer.FileGroup
 {
     public class FileGroup : IComparable<FileGroup>
     {
-        private readonly SortedSet<PictureFile> _files = new SortedSet<PictureFile>();
+        private SortedSet<PictureFile> _files = new SortedSet<PictureFile>();
+        private object _filesLock=new object();
         private readonly SortedSet<FileGroup> _groups = new SortedSet<FileGroup>();
         private Func<PictureFile, bool> _filter = file => true;
         private long? _numberOfFilesFiltered;
@@ -101,39 +102,36 @@ namespace SlideshowViewer.FileGroup
 
         #region files
 
-        protected List<PictureFile> GetFiles()
+        protected SortedSet<PictureFile> GetFiles()
         {
-            lock (_files)
-            {
-                return new List<PictureFile>(_files);
-            }
+            return _files;
         }
 
         protected void AddFiles(IEnumerable<PictureFile> files)
         {
-            lock (_files)
+            lock (_filesLock)
             {
-                _files.AddAll(files);
+                SortedSet<PictureFile> newfiles = new SortedSet<PictureFile>(_files);
+                newfiles.AddAll(files);
+                _files = newfiles;
                 Changed = true;
             }
         }
 
         protected void RemoveFiles(IEnumerable<string> existingFiles)
         {
-            lock (_files)
+            lock (_filesLock)
             {
-                _files.RemoveWhere(file => existingFiles.Contains(file.FileName));
+                SortedSet<PictureFile> newfiles = new SortedSet<PictureFile>(_files);
+                newfiles.RemoveWhere(file => existingFiles.Contains(file.FileName));
+                _files = newfiles;
                 Changed = true;
             }
         }
 
-        internal void AddFile(PictureFile file)
+        internal void AddFile(params PictureFile[] file)
         {
-            lock (_files)
-            {
-                _files.Add(file);
-                Changed = true;
-            }
+            AddFiles(file);
         }
 
         #endregion
