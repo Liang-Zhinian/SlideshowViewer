@@ -19,7 +19,8 @@ namespace SlideshowViewer
         private Timer _refreshTimer;
         private RootFileGroup _root;
         private int _slideshowFileIndex;
-        private List<PictureFile> _slideshowFiles;
+        private List<PictureFile.PictureFile> _slideshowFiles;
+        private List<PictureFile.PictureFile> _browseFiles;
 
         public DirectoryTree()
         {
@@ -32,7 +33,7 @@ namespace SlideshowViewer
 
             AutoRun = true;
 
-
+            _form.buildDate.Text = "Build date: " + Utils.RetrieveLinkerTimestamp().ToString();
             _form.directoryTreeView.CanExpandGetter = FileGroup.FileGroup.CanExpandGetter;
             _form.directoryTreeView.ChildrenGetter = FileGroup.FileGroup.ChildrenGetter;
             _form.directoryTreeView.ItemActivate += DirectoryTreeViewOnItemActivate;
@@ -158,6 +159,7 @@ namespace SlideshowViewer
             using (PictureViewerForm pictureViewerForm = CreatePictureViewForm())
             {
                 UpdateStatusBar();
+                _browseFiles = new List<PictureFile.PictureFile>(GetSelectedFiles());
                 SetupForm(pictureViewerForm, null);
                 pictureViewerForm.ShowDialog();
                 _slideshowFiles = null;
@@ -169,7 +171,7 @@ namespace SlideshowViewer
         }
 
 
-        private void SetupForm(PictureViewerForm pictureViewerForm, PictureFile startFile)
+        private void SetupForm(PictureViewerForm pictureViewerForm, PictureFile.PictureFile startFile)
         {
             _pictureViewerForm.Loop = Loop;
             _pictureViewerForm.DelayInSec = DelayInSec;
@@ -181,9 +183,9 @@ namespace SlideshowViewer
                     _slideshowFiles = pictureViewerForm.Files;
                     _slideshowFileIndex = pictureViewerForm.FileIndex;
                 }
-                pictureViewerForm.Files = new List<PictureFile>(GetSelectedFiles());
+                pictureViewerForm.Files = new List<PictureFile.PictureFile>(_browseFiles);
                 pictureViewerForm.FileIndex = startFile != null
-                                                  ? new List<PictureFile>(GetSelectedFiles()).IndexOf(startFile)
+                                                  ? new List<PictureFile.PictureFile>(_browseFiles).IndexOf(startFile)
                                                   : 0;
             }
             else
@@ -195,8 +197,8 @@ namespace SlideshowViewer
                 }
                 else
                 {
-                    List<PictureFile> pictureFiles;
-                    pictureViewerForm.FileIndex = PrepareFileList(GetSelectedFiles(), out pictureFiles);
+                    List<PictureFile.PictureFile> pictureFiles;
+                    pictureViewerForm.FileIndex = PrepareFileList(_browseFiles, out pictureFiles);
                     pictureViewerForm.Files = pictureFiles;
                 }
             }
@@ -204,12 +206,12 @@ namespace SlideshowViewer
             pictureViewerForm.ShowPicture();
         }
 
-        private int PrepareFileList(IEnumerable<PictureFile> files, out List<PictureFile> pictureFiles)
+        private int PrepareFileList(IEnumerable<PictureFile.PictureFile> files, out List<PictureFile.PictureFile> pictureFiles)
         {
-            var shownFiles = new List<PictureFile>();
-            var notShownFiles = new List<PictureFile>();
+            var shownFiles = new List<PictureFile.PictureFile>();
+            var notShownFiles = new List<PictureFile.PictureFile>();
 
-            foreach (PictureFile file in files)
+            foreach (PictureFile.PictureFile file in files)
             {
                 if (ResumeManager.IsShown(file))
                     shownFiles.Add(file);
@@ -221,10 +223,10 @@ namespace SlideshowViewer
             {
                 ResumeManager.SetToNotShown(shownFiles);
                 notShownFiles = shownFiles;
-                shownFiles = new List<PictureFile>();
+                shownFiles = new List<PictureFile.PictureFile>();
             }
 
-            pictureFiles = new List<PictureFile>();
+            pictureFiles = new List<PictureFile.PictureFile>();
             if (Shuffle)
             {
                 pictureFiles.AddRange(shownFiles.GetShuffled());
@@ -238,7 +240,7 @@ namespace SlideshowViewer
             return shownFiles.Count;
         }
 
-        private void ToggleBrowsing(PictureFile file)
+        private void ToggleBrowsing(PictureFile.PictureFile file)
         {
             Browse = !Browse;
             SetupForm(_pictureViewerForm, file);
@@ -262,7 +264,7 @@ namespace SlideshowViewer
             {
                 decimal minFileSize = MinFileSize;
                 decimal modifiedAfter = ModifiedAfter;
-                Func<PictureFile, bool> filter = delegate(PictureFile file)
+                Func<PictureFile.PictureFile, bool> filter = delegate(PictureFile.PictureFile file)
                     {
                         if (file.FileSize < minFileSize)
                             return false;
@@ -400,7 +402,7 @@ namespace SlideshowViewer
                      .Sum(directory => directory.GetNumberOfFiles());
         }
 
-        private IEnumerable<PictureFile> GetSelectedFiles()
+        private IEnumerable<PictureFile.PictureFile> GetSelectedFiles()
         {
             return
                 _form.directoryTreeView.SelectedObjects.Cast<FileGroup.FileGroup>()

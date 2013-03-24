@@ -8,10 +8,10 @@ namespace SlideshowViewer.FileGroup
 {
     public class FileGroup : IComparable<FileGroup>
     {
-        private SortedSet<PictureFile> _files = new SortedSet<PictureFile>();
+        private SortedSet<PictureFile.PictureFile> _files = new SortedSet<PictureFile.PictureFile>();
         private object _filesLock=new object();
         private readonly SortedSet<FileGroup> _groups = new SortedSet<FileGroup>();
-        private Func<PictureFile, bool> _filter = file => true;
+        private Func<PictureFile.PictureFile, bool> _filter = file => true;
         private long? _numberOfFilesFiltered;
 
 
@@ -22,7 +22,7 @@ namespace SlideshowViewer.FileGroup
 
         public virtual string Name { get; private set; }
 
-        public Func<PictureFile, bool> Filter
+        public Func<PictureFile.PictureFile, bool> Filter
         {
             get { return _filter; }
             set
@@ -102,16 +102,16 @@ namespace SlideshowViewer.FileGroup
 
         #region files
 
-        protected SortedSet<PictureFile> GetFiles()
+        protected SortedSet<PictureFile.PictureFile> GetFiles()
         {
             return _files;
         }
 
-        protected void AddFiles(IEnumerable<PictureFile> files)
+        protected void AddFiles(IEnumerable<PictureFile.PictureFile> files)
         {
             lock (_filesLock)
             {
-                SortedSet<PictureFile> newfiles = new SortedSet<PictureFile>(_files);
+                SortedSet<PictureFile.PictureFile> newfiles = new SortedSet<PictureFile.PictureFile>(_files);
                 newfiles.AddAll(files);
                 _files = newfiles;
                 Changed = true;
@@ -122,14 +122,14 @@ namespace SlideshowViewer.FileGroup
         {
             lock (_filesLock)
             {
-                SortedSet<PictureFile> newfiles = new SortedSet<PictureFile>(_files);
+                SortedSet<PictureFile.PictureFile> newfiles = new SortedSet<PictureFile.PictureFile>(_files);
                 newfiles.RemoveWhere(file => existingFiles.Contains(file.FileName));
                 _files = newfiles;
                 Changed = true;
             }
         }
 
-        internal void AddFile(params PictureFile[] file)
+        internal void AddFile(params PictureFile.PictureFile[] file)
         {
             AddFiles(file);
         }
@@ -157,17 +157,17 @@ namespace SlideshowViewer.FileGroup
             return ((FileGroup) model).GetNonEmptyGroups();
         }
 
-        public IEnumerable<PictureFile> GetFilesRecursive()
+        public IEnumerable<PictureFile.PictureFile> GetFilesRecursive()
         {
 
             Func<object, string> GetName = delegate(object o)
                 {
                     if (o is FileGroup)
                         return ((FileGroup) o).Name;
-                    return ((PictureFile) o).FileInfo.Name;
+                    return ((PictureFile.PictureFile) o).FileInfo.Name;
                 };
 
-            foreach (var next in Extensions.MergeSorted<object>((o, o1) => GetName(o).CompareTo(GetName(o1)),GetFilteredFiles(),GetGroups()))
+            foreach (var next in Utils.MergeSorted<object>((o, o1) => GetName(o).CompareTo(GetName(o1)),GetFilteredFiles(),GetGroups()))
             {
                 if (next is FileGroup)
                 {
@@ -178,13 +178,13 @@ namespace SlideshowViewer.FileGroup
                 }
                 else
                 {
-                    yield return (PictureFile) next;
+                    yield return (PictureFile.PictureFile) next;
                 }
             }
         }
 
 
-        private IEnumerable<PictureFile> GetFilteredFiles()
+        private IEnumerable<PictureFile.PictureFile> GetFilteredFiles()
         {
             return GetFiles().Where(_filter);
         }

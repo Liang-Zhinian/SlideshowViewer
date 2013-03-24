@@ -12,9 +12,9 @@ namespace SlideshowViewer
 {
     public partial class PictureViewerForm : Form
     {
-        public delegate void AllPicturesShownDelegate(IEnumerable<PictureFile> file);
+        public delegate void AllPicturesShownDelegate(IEnumerable<PictureFile.PictureFile> file);
 
-        public delegate void PictureShownDelegate(PictureFile file);
+        public delegate void PictureShownDelegate(PictureFile.PictureFile file);
 
         private readonly Timer _preLoadTimer;
         private Timer _slideShowTimer;
@@ -42,7 +42,7 @@ namespace SlideshowViewer
         public PictureShownDelegate PictureShown { get; set; }
         public AllPicturesShownDelegate AllPicturesShown { get; set; }
 
-        public List<PictureFile> Files { get; set; }
+        public List<PictureFile.PictureFile> Files { get; set; }
 
         public int FileIndex { get; set; }
 
@@ -52,7 +52,7 @@ namespace SlideshowViewer
 
         public string OverlayTextTemplate { get; set; }
 
-        public Action<PictureFile> ToggleBrowsing { get; set; }
+        public Action<PictureFile.PictureFile> ToggleBrowsing { get; set; }
 
         public bool Browsing { get; set; }
 
@@ -67,11 +67,11 @@ namespace SlideshowViewer
         {
             for (int i = 0; i < Files.Count; i++)
             {
-                PictureFile pictureFile = Files[i];
-                if (i < FileIndex - 3 || i > FileIndex + 3)
+                PictureFile.PictureFile pictureFile = Files[i];
+                if ((i < FileIndex - 3 || i > FileIndex + 3))
                     pictureFile.UnloadImage();
                 if (i >= FileIndex - 1 && i <= FileIndex + 1)
-                    pictureFile.GetImage();
+                    pictureFile.LoadImage();
             }
         }
 
@@ -105,9 +105,9 @@ namespace SlideshowViewer
                 }
             }
 
-            PictureFile file = Files[FileIndex];
-            Image bitmap = file.Image;
-            int imageDuration = file.GetImageDuration();
+            PictureFile.PictureFile file = Files[FileIndex];
+            Image bitmap = file.Data.Image;
+            int imageDuration = file.Data.ImageDuration;
 
             pictureBox1.HighQuality = imageDuration == 0;
             pictureBox1.Image = bitmap;
@@ -150,18 +150,18 @@ namespace SlideshowViewer
                 pictureBox1.LowerLeftText = lowerLeftText;                
             }
             _preLoadTimer.Stop();
-            if (!file.IsAnimatedGif())
+            if (file.Data.ImageDuration==0)
                 _preLoadTimer.Start();
         }
 
-        private string GetOverlayText(PictureFile file, string template)
+        private string GetOverlayText(PictureFile.PictureFile file, string template)
         {
             template = template.Replace("{eol}", "\n");
             template = template.Replace("{fullName}", file.FileName);
-            template = template.Replace("{imageDescription}", file.GetImageDescription());
-            template = template.Replace("{description}", file.GetDescription());
-            template = template.Replace("{dateTime}", file.GetDateTime());
-            template = template.Replace("{model}", file.GetModel());
+            template = template.Replace("{imageDescription}", file.Data.ImageDescription);
+            template = template.Replace("{description}", file.Data.Description);
+            template = template.Replace("{dateTime}", file.Data.DateTime);
+            template = template.Replace("{model}", file.Data.Model);
             template = template.Replace("{index}", (FileIndex + 1).ToString("n0"));
             template = template.Replace("{total}", Files.Count.ToString("n0"));
             return string.Join("\n", template.SplitIntoLines().Where(s => s.Length > 0));
@@ -247,7 +247,7 @@ namespace SlideshowViewer
             base.OnMouseWheel(e);
         }
 
-        private void MarkFile(int i, PictureFile pictureFile)
+        private void MarkFile(int i, PictureFile.PictureFile pictureFile)
         {
             using (File.Create(pictureFile.FileName + ".ssv." + i))
             {
@@ -285,7 +285,7 @@ namespace SlideshowViewer
         {
             base.OnFormClosed(e);
             StopSlideShowTimer();
-            foreach (PictureFile pictureFile in Files)
+            foreach (PictureFile.PictureFile pictureFile in Files)
             {
                 pictureFile.UnloadImage();
             }

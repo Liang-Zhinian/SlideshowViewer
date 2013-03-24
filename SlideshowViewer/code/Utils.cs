@@ -2,20 +2,21 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace SlideshowViewer
 {
-    public static class Extensions
+    public static class Utils
     {
-        public static TKey GetKey<TKey, TValue>(this IDictionary<TKey, TValue> dict, TValue value) 
+        public static TKey GetKey<TKey, TValue>(this IDictionary<TKey, TValue> dict, TValue value)
             where TKey : class
-            where TValue :class 
+            where TValue : class
         {
             if (value == null)
             {
-                var keyValuePair = dict.First(pair => pair.Value == null);
-                var key = keyValuePair.Key;
+                KeyValuePair<TKey, TValue> keyValuePair = dict.First(pair => pair.Value == null);
+                TKey key = keyValuePair.Key;
                 return key;
             }
             EqualityComparer<TValue> @default = EqualityComparer<TValue>.Default;
@@ -26,8 +27,8 @@ namespace SlideshowViewer
         {
             using (var reader = new StringReader(s))
             {
-                var line = reader.ReadLine();
-                while (line!=null)
+                string line = reader.ReadLine();
+                while (line != null)
                 {
                     yield return line;
                     line = reader.ReadLine();
@@ -38,9 +39,9 @@ namespace SlideshowViewer
         public static bool MatchGlob(this string s, string pattern)
         {
             pattern = Regex.Escape(pattern);
-            pattern=pattern.Replace(@"\*", "[^/]*");
-            pattern=pattern.Replace(@"\?", "[^/]?");
-            return new Regex("^"+pattern+"$", RegexOptions.IgnoreCase).IsMatch(s);
+            pattern = pattern.Replace(@"\*", "[^/]*");
+            pattern = pattern.Replace(@"\?", "[^/]?");
+            return new Regex("^" + pattern + "$", RegexOptions.IgnoreCase).IsMatch(s);
         }
 
         public static bool StartsWith<T>(this List<T> l, List<T> start)
@@ -50,7 +51,7 @@ namespace SlideshowViewer
                 return false;
             for (int i = 0; i < start.Count; i++)
             {
-                if (!@default.Equals(l[i],start[i]))
+                if (!@default.Equals(l[i], start[i]))
                     return false;
             }
             return true;
@@ -60,11 +61,11 @@ namespace SlideshowViewer
         {
             var ret = new SortedDictionary<double, T>();
             var r = new Random();
-            foreach (var item in items)
+            foreach (T item in items)
             {
                 while (true)
                 {
-                    var key = r.NextDouble();
+                    double key = r.NextDouble();
                     try
                     {
                         ret.Add(key, item);
@@ -102,7 +103,7 @@ namespace SlideshowViewer
 
         public static void AddAll<T>(this ICollection<T> collection, IEnumerable<T> items)
         {
-            foreach (var item in items)
+            foreach (T item in items)
             {
                 collection.Add(item);
             }
@@ -110,8 +111,8 @@ namespace SlideshowViewer
 
         public static T Largest<T>(this IEnumerable<T> items, Comparison<T> comparer) where T : class
         {
-            T largest=null;
-            foreach (var item in items)
+            T largest = null;
+            foreach (T item in items)
             {
                 if (largest == null || comparer(largest, item) > 0)
                     largest = item;
@@ -119,18 +120,48 @@ namespace SlideshowViewer
             return largest;
         }
 
-        public static IEnumerable<T> MergeSorted<T>(Comparison<T> comparer,params IEnumerable<T>[] input) where T:class 
+        public static IEnumerable<T> MergeSorted<T>(Comparison<T> comparer, params IEnumerable<T>[] input)
+            where T : class
         {
-            var all=new List<IEnumerator<T>>(input.Select(enumerable => enumerable.GetEnumerator()));
+            var all = new List<IEnumerator<T>>(input.Select(enumerable => enumerable.GetEnumerator()));
             all.RemoveAll(enumerator => !enumerator.MoveNext());
             while (!all.IsEmpty())
             {
-                var largest = all.Largest((enumerator, enumerator1) => comparer(enumerator.Current, enumerator1.Current));
+                IEnumerator<T> largest =
+                    all.Largest((enumerator, enumerator1) => comparer(enumerator.Current, enumerator1.Current));
                 yield return largest.Current;
                 if (!largest.MoveNext())
                     all.Remove(largest);
             }
         }
 
+        public static DateTime RetrieveLinkerTimestamp()
+        {
+            string filePath = Assembly.GetCallingAssembly().Location;
+            const int c_PeHeaderOffset = 60;
+            const int c_LinkerTimestampOffset = 8;
+            var b = new byte[2048];
+            Stream s = null;
+
+            try
+            {
+                s = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                s.Read(b, 0, 2048);
+            }
+            finally
+            {
+                if (s != null)
+                {
+                    s.Close();
+                }
+            }
+
+            int i = BitConverter.ToInt32(b, c_PeHeaderOffset);
+            int secondsSince1970 = BitConverter.ToInt32(b, i + c_LinkerTimestampOffset);
+            var dt = new DateTime(1970, 1, 1, 0, 0, 0);
+            dt = dt.AddSeconds(secondsSince1970);
+            dt = dt.AddHours(TimeZone.CurrentTimeZone.GetUtcOffset(dt).Hours);
+            return dt;
+        }
     }
 }

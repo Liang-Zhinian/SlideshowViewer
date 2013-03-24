@@ -51,6 +51,7 @@
             this.Total = ((BrightIdeasSoftware.OLVColumn)(new BrightIdeasSoftware.OLVColumn()));
             this.panel2 = new System.Windows.Forms.Panel();
             this.statusBar = new System.Windows.Forms.Label();
+            this.buildDate = new System.Windows.Forms.Label();
             this.throbber = new System.Windows.Forms.PictureBox();
             this.panel3 = new System.Windows.Forms.Panel();
             this.panel1.SuspendLayout();
@@ -344,6 +345,7 @@
             // 
             this.panel2.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.panel2.Controls.Add(this.statusBar);
+            this.panel2.Controls.Add(this.buildDate);
             this.panel2.Controls.Add(this.throbber);
             this.panel2.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.panel2.Location = new System.Drawing.Point(0, 604);
@@ -356,10 +358,20 @@
             this.statusBar.Dock = System.Windows.Forms.DockStyle.Fill;
             this.statusBar.Location = new System.Drawing.Point(18, 0);
             this.statusBar.Name = "statusBar";
-            this.statusBar.Size = new System.Drawing.Size(1085, 18);
+            this.statusBar.Size = new System.Drawing.Size(915, 18);
             this.statusBar.TabIndex = 0;
             this.statusBar.Text = "status";
             this.statusBar.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // buildDate
+            // 
+            this.buildDate.Dock = System.Windows.Forms.DockStyle.Right;
+            this.buildDate.Location = new System.Drawing.Point(933, 0);
+            this.buildDate.Name = "buildDate";
+            this.buildDate.Size = new System.Drawing.Size(170, 18);
+            this.buildDate.TabIndex = 2;
+            this.buildDate.Text = "build date";
+            this.buildDate.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // throbber
             // 
@@ -437,6 +449,7 @@
         private System.Windows.Forms.Panel panel3;
         public System.Windows.Forms.Label statusBar;
         public System.Windows.Forms.PictureBox throbber;
+        internal System.Windows.Forms.Label buildDate;
 
 
     }

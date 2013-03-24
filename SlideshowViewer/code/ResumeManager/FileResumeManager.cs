@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace SlideshowViewer
 {
@@ -12,27 +13,27 @@ namespace SlideshowViewer
         {
             _fileName = fileName;
             if (File.Exists(fileName))
-                _shownFiles = new HashSet<string>(File.ReadAllLines(fileName));
+                _shownFiles = new HashSet<string>(File.ReadAllLines(fileName).Select(s => s.ToUpper()));
         }
 
-        public bool IsShown(PictureFile file)
+        public bool IsShown(PictureFile.PictureFile file)
         {
-            return _shownFiles.Contains(file.FileName);
+            return _shownFiles.Contains(file.FileName.ToUpper());
         }
 
-        public void SetToNotShown(IEnumerable<PictureFile> files)
+        public void SetToNotShown(IEnumerable<PictureFile.PictureFile> files)
         {
-            foreach (PictureFile pictureFile in files)
+            foreach (PictureFile.PictureFile pictureFile in files)
             {
-                _shownFiles.Remove(pictureFile.FileName);
+                _shownFiles.Remove(pictureFile.FileName.ToUpper());
             }
             File.WriteAllLines(_fileName, _shownFiles);
         }
 
-        public void SetToShown(PictureFile pictureFile)
+        public void SetToShown(PictureFile.PictureFile pictureFile)
         {
-            _shownFiles.Add(pictureFile.FileName);
-            File.AppendAllLines(_fileName, new[] {pictureFile.FileName});
+            _shownFiles.Add(pictureFile.FileName.ToUpper());
+            File.AppendAllLines(_fileName, new[] {pictureFile.FileName.ToUpper()});
         }
     }
 }

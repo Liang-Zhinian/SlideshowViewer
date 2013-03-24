@@ -5,10 +5,10 @@ namespace SlideshowViewer
     public interface IResumeManager
     {
 
-        bool IsShown(PictureFile file);
+        bool IsShown(PictureFile.PictureFile file);
 
-        void SetToNotShown(IEnumerable<PictureFile> files);
+        void SetToNotShown(IEnumerable<PictureFile.PictureFile> files);
 
-        void SetToShown(PictureFile pictureFile);
+        void SetToShown(PictureFile.PictureFile pictureFile);
     }
 }

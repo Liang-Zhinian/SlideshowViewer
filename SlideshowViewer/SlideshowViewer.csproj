@@ -88,14 +88,15 @@
     </Compile>
     <Compile Include="code\FileGroup\RootFileGroup.cs" />
     <Compile Include="code\FileGroup\DirectoryTreeFileGroup.cs" />
+    <Compile Include="code\PictureFile\PictureFileData.cs" />
+    <Compile Include="code\PictureFile\PictureFile.cs" />
     <Compile Include="code\ResumeManager\DummyResumeManager.cs" />
     <Compile Include="code\ResumeManager\FileResumeManager.cs" />
     <Compile Include="code\Unimportant\FileAssociation.cs" />
-    <Compile Include="code\Extensions.cs" />
+    <Compile Include="code\Utils.cs" />
     <Compile Include="code\PictureViewer\MyPictureBox.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="code\PictureFile.cs" />
     <Compile Include="code\PictureViewer\PictureViewerForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -142,7 +143,9 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">

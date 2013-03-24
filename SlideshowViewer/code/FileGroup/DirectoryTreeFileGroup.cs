@@ -41,21 +41,21 @@ namespace SlideshowViewer.FileGroup
             }
 
             var existingFiles = new HashSet<string>(GetFiles().Select(file => file.FileName));
-            IEnumerable<PictureFile> pictureFiles =
-                PictureFile.FileNamePatterns.SelectMany(pattern => _directoryInfo.EnumerateFiles(pattern))
+            IEnumerable<PictureFile.PictureFile> pictureFiles =
+                PictureFile.PictureFile.FileNamePatterns.SelectMany(pattern => _directoryInfo.EnumerateFiles(pattern))
                            .Distinct(new CompareFileNames())
                            .Where(info => !info.Name.StartsWith("._"))
                            .Where(info => !existingFiles.Remove(info.FullName))
-                           .Select(info => new PictureFile(info));
-            var files = new List<PictureFile>();
-            foreach (PictureFile pictureFile in pictureFiles)
+                           .Select(info => new PictureFile.PictureFile(info));
+            var files = new List<PictureFile.PictureFile>();
+            foreach (PictureFile.PictureFile pictureFile in pictureFiles)
             {
                 token.ThrowIfCancellationRequested();
                 files.Add(pictureFile);
                 if (files.Count > 999)
                 {
                     AddFiles(files);
-                    files = new List<PictureFile>();
+                    files = new List<PictureFile.PictureFile>();
                 }
             }
             if (!files.IsEmpty())

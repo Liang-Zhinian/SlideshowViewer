@@ -45,7 +45,7 @@ namespace SlideshowViewer.FileGroup
                 Changed = true;
                 return true;
             }
-            if (!PictureFile.FileNamePatterns.Any(s => Path.GetFileName(fileName).MatchGlob(s)))
+            if (!PictureFile.PictureFile.FileNamePatterns.Any(s => Path.GetFileName(fileName).MatchGlob(s)))
                 return false;
             if (File.Exists(fileName))
             {
@@ -55,7 +55,7 @@ namespace SlideshowViewer.FileGroup
                     AddGroup(_addedFiles);
                     Changed = true;
                 }
-                _addedFiles.AddFile(new PictureFile(new FileInfo(fileName)));
+                _addedFiles.AddFile(new PictureFile.PictureFile(new FileInfo(fileName)));
                 return true;
             }
             return false;
