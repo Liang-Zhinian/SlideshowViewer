@@ -92,7 +92,6 @@
     <Compile Include="code\PictureFile\PictureFile.cs" />
     <Compile Include="code\ResumeManager\DummyResumeManager.cs" />
     <Compile Include="code\ResumeManager\FileResumeManager.cs" />
-    <Compile Include="code\Unimportant\FileAssociation.cs" />
     <Compile Include="code\Utils.cs" />
     <Compile Include="code\PictureViewer\MyPictureBox.cs">
       <SubType>Component</SubType>
