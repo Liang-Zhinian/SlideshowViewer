@@ -45,38 +45,6 @@ namespace SlideshowViewer
         }
 
 
-        private static void AddToFolderContextMenu()
-        {
-            string exeFileName = Process.GetCurrentProcess().MainModule.FileName.Replace(".vshost", "");
-            FileAssociation.Associate(".ssv", "Nemosoft.SlideshowViewer", "Slideshow configuration", exeFileName,
-                                      exeFileName);
-            using (RegistryKey shell = Registry.ClassesRoot.OpenSubKey("Folder").OpenSubKey("shell", true))
-            {
-                using (RegistryKey ssv = shell.OpenSubKey("ssv", true) ?? shell.CreateSubKey("ssv"))
-                {
-                    ssv.SetValue(null, "Show Slideshow");
-                    ssv.SetValue("Icon", exeFileName);
-                    using (RegistryKey command = ssv.OpenSubKey("command", true) ?? ssv.CreateSubKey("command"))
-                    {
-                        command.SetValue(null,
-                                         String.Format(@"""{0}"" shuffle=false ""%1""",
-                                                       exeFileName));
-                    }
-                }
-                using (RegistryKey ssv = shell.OpenSubKey("ssvshuffle", true) ?? shell.CreateSubKey("ssvshuffle"))
-                {
-                    ssv.SetValue(null, "Show Slideshow (Shuffle)");
-                    ssv.SetValue("Icon", exeFileName);
-                    using (RegistryKey command = ssv.OpenSubKey("command", true) ?? ssv.CreateSubKey("command"))
-                    {
-                        command.SetValue(null,
-                                         String.Format(@"""{0}"" shuffle=true ""%1""",
-                                                       exeFileName));
-                    }
-                }
-            }
-        }
-
         private static void ReadDefaultConfig()
         {
             string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
