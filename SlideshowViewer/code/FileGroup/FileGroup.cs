@@ -102,12 +102,12 @@ namespace SlideshowViewer.FileGroup
 
         #region files
 
-        protected SortedSet<PictureFile.PictureFile> GetFiles()
+        public SortedSet<PictureFile.PictureFile> GetFiles()
         {
             return _files;
         }
 
-        protected void AddFiles(IEnumerable<PictureFile.PictureFile> files)
+        protected internal void AddFiles(IEnumerable<PictureFile.PictureFile> files)
         {
             lock (_filesLock)
             {
@@ -118,7 +118,7 @@ namespace SlideshowViewer.FileGroup
             }
         }
 
-        protected void RemoveFiles(IEnumerable<string> existingFiles)
+        protected internal void RemoveFiles(IEnumerable<string> existingFiles)
         {
             lock (_filesLock)
             {
@@ -157,34 +157,21 @@ namespace SlideshowViewer.FileGroup
             return ((FileGroup) model).GetNonEmptyGroups();
         }
 
-        public IEnumerable<PictureFile.PictureFile> GetFilesRecursive()
+        public virtual IEnumerable<PictureFile.PictureFile> GetFilesRecursive()
         {
-
-            Func<object, string> GetName = delegate(object o)
-                {
-                    if (o is FileGroup)
-                        return ((FileGroup) o).Name;
-                    return ((PictureFile.PictureFile) o).FileInfo.Name;
-                };
-
-            foreach (var next in Utils.MergeSorted<object>((o, o1) => GetName(o).CompareTo(GetName(o1)),GetFilteredFiles(),GetGroups()))
+            foreach (var pictureFile in _files)
             {
-                if (next is FileGroup)
-                {
-                    foreach (var pictureFile in ((FileGroup) next).GetFilesRecursive())
-                    {
-                        yield return pictureFile;
-                    }
-                }
-                else
-                {
-                    yield return (PictureFile.PictureFile) next;
-                }
+                yield return pictureFile;
+            }
+
+            foreach (var pictureFile in _groups.SelectMany(fileGroup => fileGroup.GetFilesRecursive()))
+            {
+                yield return pictureFile;
             }
         }
 
 
-        private IEnumerable<PictureFile.PictureFile> GetFilteredFiles()
+        internal IEnumerable<PictureFile.PictureFile> GetFilteredFiles()
         {
             return GetFiles().Where(_filter);
         }
