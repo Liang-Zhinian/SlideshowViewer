@@ -2,12 +2,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace SlideshowViewer
+namespace SlideshowViewer.ResumeManager
 {
-    internal class FileResumeManager : IResumeManager
+    internal class FileResumeManager : MemoryResumeManager
     {
         private readonly string _fileName;
-        private readonly HashSet<string> _shownFiles = new HashSet<string>();
 
         public FileResumeManager(string fileName)
         {
@@ -16,24 +15,16 @@ namespace SlideshowViewer
                 _shownFiles = new HashSet<string>(File.ReadAllLines(fileName).Select(s => s.ToUpper()));
         }
 
-        public bool IsShown(PictureFile.PictureFile file)
+        public override void SetToNotShown(IEnumerable<PictureFile.PictureFile> files)
         {
-            return _shownFiles.Contains(file.FileName.ToUpper());
-        }
-
-        public void SetToNotShown(IEnumerable<PictureFile.PictureFile> files)
-        {
-            foreach (PictureFile.PictureFile pictureFile in files)
-            {
-                _shownFiles.Remove(pictureFile.FileName.ToUpper());
-            }
+            base.SetToNotShown(files);
             File.WriteAllLines(_fileName, _shownFiles);
         }
 
-        public void SetToShown(PictureFile.PictureFile pictureFile)
+        public override void SetToShown(PictureFile.PictureFile pictureFile)
         {
-            _shownFiles.Add(pictureFile.FileName.ToUpper());
-            File.AppendAllLines(_fileName, new[] {pictureFile.FileName.ToUpper()});
+            base.SetToShown(pictureFile);
+            File.AppendAllLines(_fileName, new[] { pictureFile.FileName.ToUpper() });
         }
     }
 }

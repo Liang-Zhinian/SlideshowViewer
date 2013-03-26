@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows.Forms;
 using SlideshowViewer.FileGroup;
 using SlideshowViewer.Properties;
+using SlideshowViewer.ResumeManager;
 using Timer = System.Timers.Timer;
 
 namespace SlideshowViewer
@@ -29,7 +30,7 @@ namespace SlideshowViewer
             Loop = true;
             DelayInSec = 15;
             OverlayText =
-                "{imageDescription}{eol}{description}{eol}{dateTime}{eol}{model}{eol}{fullName}{eol}{index} / {total}";
+                "{description}{nl}{dateTaken}{nl}{makeAndModel}{nl}{fullName}{nl}{index} / {total}";
 
             AutoRun = true;
 

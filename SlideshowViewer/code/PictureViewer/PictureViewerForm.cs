@@ -4,17 +4,29 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Timers;
 using System.Windows.Forms;
 using Timer = System.Timers.Timer;
 
 namespace SlideshowViewer
 {
+    internal enum InfoState
+    {
+        Template,
+        Hidden,
+        Full
+    }
+
     public partial class PictureViewerForm : Form
     {
+        #region Delegates
+
         public delegate void AllPicturesShownDelegate(IEnumerable<PictureFile.PictureFile> file);
 
         public delegate void PictureShownDelegate(PictureFile.PictureFile file);
+
+        #endregion
 
         private readonly Timer _preLoadTimer;
         private Timer _slideShowTimer;
@@ -24,7 +36,7 @@ namespace SlideshowViewer
             DelayInSec = 15;
             Loop = false;
             Paused = false;
-            ShowInfo = true;
+            InfoState = InfoState.Template;
             OverlayTextTemplate = "{fullName}";
             InitializeComponent();
             _preLoadTimer = new Timer(1000);
@@ -58,7 +70,7 @@ namespace SlideshowViewer
 
         private bool Paused { get; set; }
 
-        private bool ShowInfo { get; set; }
+        private InfoState InfoState { get; set; }
 
         [DllImport("kernel32.dll")]
         private static extern bool CreateSymbolicLink(string lpSymlinkFileName, string lpTargetFileName, int dwFlags);
@@ -112,9 +124,6 @@ namespace SlideshowViewer
             pictureBox1.HighQuality = imageDuration == 0;
             pictureBox1.Image = bitmap;
             string lowerRightText = null;
-            string lowerLeftText = null;
-            
-            lowerLeftText = GetOverlayText(file, OverlayTextTemplate);
 
             StopSlideShowTimer();
             decimal interval = Math.Max(DelayInSec*1000, imageDuration + imageDuration/2);
@@ -139,32 +148,51 @@ namespace SlideshowViewer
             {
                 lowerRightText = "BROWSING";
             }
-            if (!ShowInfo)
+            switch (InfoState)
             {
-                pictureBox1.LowerRightText = null;
-                pictureBox1.LowerLeftText = null;
-            }
-            else
-            {
-                pictureBox1.LowerRightText = lowerRightText;
-                pictureBox1.LowerLeftText = lowerLeftText;                
+                case InfoState.Template:
+                    pictureBox1.LowerRightText = lowerRightText;
+                    pictureBox1.LowerLeftText = GetOverlayText(file, OverlayTextTemplate);
+                    break;
+                case InfoState.Hidden:
+                    pictureBox1.LowerRightText = null;
+                    pictureBox1.LowerLeftText = null;
+                    break;
+                case InfoState.Full:
+                    pictureBox1.LowerRightText = lowerRightText;
+                    pictureBox1.LowerLeftText = String.Join("\n",
+                                                            file.Data.Properties.Select(
+                                                                pair => pair.Key + ": '" + pair.Value + "'"));
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
             _preLoadTimer.Stop();
-            if (file.Data.ImageDuration==0)
+            if (file.Data.ImageDuration == 0)
                 _preLoadTimer.Start();
         }
 
         private string GetOverlayText(PictureFile.PictureFile file, string template)
         {
-            template = template.Replace("{eol}", "\n");
-            template = template.Replace("{fullName}", file.FileName);
-            template = template.Replace("{imageDescription}", file.Data.ImageDescription);
-            template = template.Replace("{description}", file.Data.Description);
-            template = template.Replace("{dateTime}", file.Data.DateTime);
-            template = template.Replace("{model}", file.Data.Model);
-            template = template.Replace("{index}", (FileIndex + 1).ToString("n0"));
-            template = template.Replace("{total}", Files.Count.ToString("n0"));
-            return string.Join("\n", template.SplitIntoLines().Where(s => s.Length > 0));
+            string overlayText = Regex.Replace(template, @"\{(.*?)\}",
+                                               match => GetReplacement(match.Groups[1].ToString().ToLower()));
+            return string.Join("\n", overlayText.SplitIntoLines().Where(s => s.Length > 0));
+        }
+
+        private string GetReplacement(string match)
+        {
+            switch (match)
+            {
+                case "nl":
+                case "eol":
+                    return "\n";
+                case "index":
+                    return (FileIndex + 1).ToString("n0");
+                case "total":
+                    return Files.Count.ToString("n0");
+                default:
+                    return Files[FileIndex].Data.Get(match, "").ToString().Trim();
+            }
         }
 
         private void StopSlideShowTimer()
@@ -216,7 +244,7 @@ namespace SlideshowViewer
                 ToggleBrowsing(Files[FileIndex]);
             if (e.KeyChar == 'i')
             {
-                ShowInfo = !ShowInfo;
+                InfoState = (InfoState) (((int)InfoState + 1)%Enum.GetValues(typeof (InfoState)).Length);
                 ShowPicture();
             }
             if (e.KeyChar == 'q')

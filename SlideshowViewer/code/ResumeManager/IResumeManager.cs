@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SlideshowViewer
+namespace SlideshowViewer.ResumeManager
 {
     public interface IResumeManager
     {

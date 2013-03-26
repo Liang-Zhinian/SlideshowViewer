@@ -1,40 +1,124 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using System.Windows.Media.Imaging;
 using ExifLib;
 
 namespace SlideshowViewer.PictureFile
 {
     public class PictureFileData
     {
-        private readonly bool _animatedGif;
+        private static readonly List<string> _propertyNames =
+            new List<string>(PropertySystemHelper.GetPropertyDefinitions());
+
         private readonly string _fileName;
+        private readonly SortedDictionary<string, object> _properties = new SortedDictionary<string, object>();
         private bool _error;
         private Image _image;
         private int _rotation;
+
+        private class DynamicProperty
+        {
+            private Func<string> _toString;
+
+            public DynamicProperty(Func<string> toString)
+            {
+                _toString = toString;
+            }
+
+            public override string ToString()
+            {
+                return _toString();
+            }
+        }
 
         public PictureFileData(FileInfo fileInfo)
         {
             _fileName = fileInfo.FullName;
 
-            #region rotation
+            foreach (var propertyInfo in typeof(FileInfo).GetProperties())
+            {
+                _properties["File." + propertyInfo.Name] = propertyInfo.GetMethod.Invoke(fileInfo, new object[0]);
+            }
 
-            _rotation = 0;
             string rotationFilename = _fileName + ".ssv.rotation";
+            _rotation = 0;
             if (File.Exists(rotationFilename))
                 _rotation = Int32.Parse(File.ReadAllText(rotationFilename));
 
-            #endregion
+            _properties["Program.Rotation"] = new DynamicProperty(() => _rotation == 0 ? "" : _rotation.ToString());
 
-            #region image duration
+            var externalDescription = ReadExternalDescription(fileInfo);
+            if (externalDescription != null)
+                _properties["DotDescription.Description"] = externalDescription;
 
-            _animatedGif = Image.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
+            _properties["Description"] = new DynamicProperty(delegate
+                {
+                    var maker = Get("CameraManufacturer", "").ToString().FirstWord().Trim().ToLower();
+                    string ret = "";
+                    foreach (var propertyName in Utils.Array("Title", "Subject", "DotDescription.Description"))
+                    {
+                        var s = Get(propertyName, "").ToString().Trim();
+                        if (!ret.Contains(s) && (maker.IsEmpty() || !s.ToLower().StartsWith(maker)))
+                            ret += "\n" + s;
+                    }
+                    return String.Join("\n",ret.SplitIntoLines().Where(s => !s.IsEmpty()));
+                });
+
+            _properties["MakeAndModel"] = new DynamicProperty(delegate
+            {
+                var maker = Get("CameraManufacturer", "").ToString().Trim();
+                var makerFirstWord = maker.FirstWord().Trim().ToLower();
+                var model = Get("CameraModel", "").ToString().Trim();
+                if (!model.ToLower().Contains(makerFirstWord))
+                    return maker + " " + model;
+                return model;
+            });
+
+
+            try
+            {
+                using (var bitmapStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    BitmapDecoder bitmapDecoder =
+                        BitmapDecoder.Create(bitmapStream,
+                                             BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
+
+                    var bitmapMetadata = (BitmapMetadata)bitmapDecoder.Frames[0].Metadata;
+                    foreach (string propertyName in _propertyNames)
+                    {
+                        if (bitmapMetadata.ContainsQuery(propertyName))
+                        {
+                            object value = bitmapMetadata.GetQuery(propertyName);
+                            if (value is FILETIME)
+                            {
+                                value = ((FILETIME)value).ToDateTime();
+                            }
+                            if (value is String[])
+                            {
+                                value = String.Join(", ", (String[])value);
+                            }
+                            _properties[propertyName] = value;
+                        }
+                    }                    
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e.ToString());
+            }
+
+            var animatedGif = Image.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
             ImageDuration = 0;
-            if (_animatedGif)
+            if (animatedGif)
             {
                 int frameCount = Image.GetFrameCount(FrameDimension.Time);
                 if (frameCount > 1)
@@ -42,7 +126,7 @@ namespace SlideshowViewer.PictureFile
                     byte[] times = Image.GetPropertyItem(0x5100).Value;
                     for (int i = 0; i < frameCount; ++i)
                     {
-                        int frameDuration = BitConverter.ToInt32(times, 4*i)*10;
+                        int frameDuration = BitConverter.ToInt32(times, 4 * i) * 10;
                         if (frameDuration < 50)
                             frameDuration = 50;
                         ImageDuration += frameDuration;
@@ -50,90 +134,20 @@ namespace SlideshowViewer.PictureFile
                 }
             }
 
-            #endregion
+            _properties["Program.ImageDuration"] = new DynamicProperty(() => ImageDuration.ToString());
 
-            ExifReader exifReader = null;
-            try
+            foreach (var property in _properties)
             {
-                exifReader = new ExifReader(_fileName);
+                Debug.WriteLine(property.Key + ": '" + property.Value + "'");
             }
-            catch (Exception)
-            {
-            }
-
-            #region orientation
-
-            Orientation = ExifGet(exifReader, ExifTags.Orientation, 1);
-
-            #endregion
-
-            #region date time
-
-            DateTime = ExifGet(exifReader, ExifTags.DateTimeOriginal, "");
-
-            #endregion
-
-            #region model
-
-            string model = ExifGet(exifReader, ExifTags.Model, "");
-            string make = ExifGet(exifReader, ExifTags.Make, "");
-
-            if (!model.StartsWith(make))
-                model = make + " " + model;
-            Model = model;
-
-            #endregion
-
-            #region image description
-
-            string imageDescription = ExifGet(exifReader, ExifTags.ImageDescription, "").Trim();
-            if (imageDescription.EndsWith("DIGITAL CAMERA"))
-                imageDescription = "";
-            ImageDescription = imageDescription;
-
-            #endregion
-
-            if (exifReader != null)
-                exifReader.Dispose();
-
-            #region description
-
-            Description = ReadExternalDescription(fileInfo);
-
-            #endregion
         }
 
-        private string ReadExternalDescription(FileInfo fileInfo)
+
+        public IEnumerable<KeyValuePair<string, object>> Properties
         {
-            try
-            {
-                string descriptionFileName = Path.Combine(fileInfo.DirectoryName, ".description");
-                if (File.Exists(descriptionFileName))
-                {
-                    foreach (string line in File.ReadLines(descriptionFileName, Encoding.GetEncoding(0)))
-                    {
-                        string[] split = line.Split(new[] { '=' }, 2);
-                        if (split.Length == 2 && split[0] == fileInfo.Name)
-                        {
-                            return split[1];
-                        }
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                return "Error reading .description: " + e.Message;
-            }
-            return "";
+            get { return _properties; }
         }
 
-        public string Description { get; private set; }
-
-        public string ImageDescription { get; private set; }
-
-        public string Model { get; private set; }
-
-        public string DateTime { get; private set; }
 
         public int ImageDuration { get; private set; }
 
@@ -142,16 +156,16 @@ namespace SlideshowViewer.PictureFile
             get { return _rotation; }
             set
             {
-                _rotation = (value + 360)%360;
+                int rotation = (value + 360)%360;
                 string rotationFilename = _fileName + ".ssv.rotation";
-                if (_rotation == 0)
+                if (rotation == 0)
                     File.Delete(rotationFilename);
                 else
-                    File.WriteAllText(rotationFilename, _rotation.ToString());
+                    File.WriteAllText(rotationFilename, rotation.ToString());
+                _rotation = rotation;
             }
         }
 
-        private int Orientation { get; set; }
 
         private bool Error
         {
@@ -177,21 +191,53 @@ namespace SlideshowViewer.PictureFile
         }
 
 
-        private static T ExifGet<T>(ExifReader exifReader, ExifTags tag, T defaultValue)
+        private KeyValuePair<string, object>? GetProperty(string propertyName)
         {
-            if (exifReader == null)
-                return defaultValue;
+            foreach (var property in _properties)
+            {
+                if (property.Key.ToLower().Equals(propertyName.ToLower()))
+                    return property;
+            }
+            foreach (var property in _properties)
+            {
+                if (property.Key.ToLower().EndsWith("."+propertyName.ToLower()))
+                    return property;
+            }
+            return null;
+        }
+
+        public object Get(string propertyName, object @default)
+        {
+            KeyValuePair<string, object>? keyValuePair = GetProperty(propertyName);
+            if (keyValuePair == null)
+                return @default;
+            return ((KeyValuePair<string, object>)keyValuePair).Value;
+        }
+
+        private string ReadExternalDescription(FileInfo fileInfo)
+        {
             try
             {
-                T result;
-                if (exifReader.GetTagValue(tag, out result))
-                    return result;
+                string descriptionFileName = Path.Combine(fileInfo.DirectoryName, ".description");
+                if (File.Exists(descriptionFileName))
+                {
+                    foreach (string line in File.ReadLines(descriptionFileName, Encoding.GetEncoding(0)))
+                    {
+                        string[] split = line.Split(new[] {'='}, 2);
+                        if (split.Length == 2 && split[0] == fileInfo.Name)
+                        {
+                            return split[1];
+                        }
+                    }
+                }
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                return "Error reading .description: " + e.Message;
             }
-            return defaultValue;
+            return null;
         }
+
 
         public void UnloadImage()
         {
@@ -227,7 +273,8 @@ namespace SlideshowViewer.PictureFile
                     7 = Mirror horizontal and rotate 90 CW 
                     8 = Rotate 270 CW
                     */
-                    switch (Orientation)
+                    var o = Get("orientation", "1");
+                    switch (int.Parse(o.ToString()))
                     {
                         case 2:
                             _image.RotateFlip(RotateFlipType.RotateNoneFlipX);

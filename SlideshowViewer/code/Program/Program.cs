@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using SlideshowViewer.FileGroup;
 using SlideshowViewer.Properties;
+using SlideshowViewer.ResumeManager;
 
 namespace SlideshowViewer
 {

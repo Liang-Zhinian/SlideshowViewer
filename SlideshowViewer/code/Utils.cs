@@ -163,5 +163,15 @@ namespace SlideshowViewer
             dt = dt.AddHours(TimeZone.CurrentTimeZone.GetUtcOffset(dt).Hours);
             return dt;
         }
+
+        public static T[] Array<T>(params T[] input)
+        {
+            return input;
+        }
+
+        public static string FirstWord(this string s)
+        {
+            return s.Split(Utils.Array(" "), StringSplitOptions.None)[0];
+        }
     }
 }
