@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Runtime.InteropServices;
 
 namespace SlideshowViewer.PictureFile
@@ -10,9 +11,8 @@ namespace SlideshowViewer.PictureFile
     {
         public static DateTime ToDateTime(this System.Runtime.InteropServices.ComTypes.FILETIME filetime)
         {
-            long highBits = filetime.dwHighDateTime;
-            highBits = highBits << 32;
-            return DateTime.FromFileTimeUtc(highBits + (long)filetime.dwLowDateTime);
+            var bytes = Utils.Concat(BitConverter.GetBytes(filetime.dwLowDateTime), BitConverter.GetBytes(filetime.dwHighDateTime));
+            return DateTime.FromFileTime(BitConverter.ToInt64(bytes,0));
         }
     }	
     internal class IIDStrings // Defined in PropSys.h
