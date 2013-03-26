@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Win32;
 using SlideshowViewer.FileGroup;
 using SlideshowViewer.Properties;
 using SlideshowViewer.ResumeManager;
@@ -15,7 +11,7 @@ namespace SlideshowViewer
     internal static class Program
     {
         private static DirectoryTree _directoryTreeForm;
-        private static RootFileGroup _root = new RootFileGroup();
+        private static readonly RootFileGroup _root = new RootFileGroup();
 
         /// <summary>
         ///     The main entry point for the application.
@@ -23,9 +19,9 @@ namespace SlideshowViewer
         [STAThread]
         private static void Main(string[] args)
         {
-            AppDomain.CurrentDomain.UnhandledException+=delegate(object sender, UnhandledExceptionEventArgs eventArgs)
+            AppDomain.CurrentDomain.UnhandledException += delegate(object sender, UnhandledExceptionEventArgs eventArgs)
                 {
-                    MessageBox.Show("Exception:\n" + eventArgs.ExceptionObject.ToString(), "Error", MessageBoxButtons.OK,
+                    MessageBox.Show("Exception:\n" + eventArgs.ExceptionObject, "Error", MessageBoxButtons.OK,
                                     MessageBoxIcon.Error);
                 };
             Application.EnableVisualStyles();

@@ -25,7 +25,7 @@ namespace SlideshowViewer
 
         public DirectoryTree()
         {
-            ResumeManager = new DummyResumeManager();
+            ResumeManager = new MemoryResumeManager();
             Shuffle = true;
             Loop = true;
             DelayInSec = 15;
