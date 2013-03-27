@@ -33,7 +33,6 @@ namespace SlideshowViewer.FileGroup
             return GetGroups().Count() == 1 ? GetGroups().First().HasNonEmptyGroups() : GetGroups().Any();
         }
 
-
         #endregion
 
         public bool Add(string fileName)
@@ -63,15 +62,10 @@ namespace SlideshowViewer.FileGroup
 
         #region scanning
 
+        private readonly object _onScanningDoneLock = new object();
         private readonly CancellationTokenSource _tokenSource = new CancellationTokenSource();
         private Action _onScanningDone;
         private bool _scanningDone;
-        private object _onScanningDoneLock = new object();
-
-        public void Stop()
-        {
-            _tokenSource.Cancel();
-        }
 
         public Action OnScanningDone
         {
@@ -86,6 +80,11 @@ namespace SlideshowViewer.FileGroup
             }
         }
 
+        public void Stop()
+        {
+            _tokenSource.Cancel();
+        }
+
         public void StartScan()
         {
             var thread = new Thread(FirstScan) {IsBackground = true};
@@ -96,12 +95,12 @@ namespace SlideshowViewer.FileGroup
         {
             try
             {
-                Queue<FileGroup> groups = new Queue<FileGroup>();
+                var groups = new Queue<FileGroup>();
                 groups.Enqueue(this);
                 while (groups.Count > 0)
                 {
                     _tokenSource.Token.ThrowIfCancellationRequested();
-                    foreach (var fileGroup in groups.Dequeue().ScanDirectories(_tokenSource.Token))
+                    foreach (FileGroup fileGroup in groups.Dequeue().ScanDirectories(_tokenSource.Token))
                     {
                         groups.Enqueue(fileGroup);
                     }
@@ -128,12 +127,12 @@ namespace SlideshowViewer.FileGroup
                 {
                     _tokenSource.Token.WaitHandle.WaitOne(5000);
                     _tokenSource.Token.ThrowIfCancellationRequested();
-                    Queue<FileGroup> groups = new Queue<FileGroup>();
+                    var groups = new Queue<FileGroup>();
                     groups.Enqueue(this);
                     while (groups.Count > 0)
                     {
                         _tokenSource.Token.ThrowIfCancellationRequested();
-                        foreach (var fileGroup in groups.Dequeue().ScanDirectories(_tokenSource.Token))
+                        foreach (FileGroup fileGroup in groups.Dequeue().ScanDirectories(_tokenSource.Token))
                         {
                             groups.Enqueue(fileGroup);
                         }
@@ -146,7 +145,5 @@ namespace SlideshowViewer.FileGroup
         }
 
         #endregion
-
-
     }
 }

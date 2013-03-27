@@ -171,15 +171,15 @@ namespace SlideshowViewer
 
         public static string FirstWord(this string s)
         {
-            return s.Split(Utils.Array(" "), StringSplitOptions.None)[0];
+            return s.Split(Array(" "), StringSplitOptions.None)[0];
         }
 
         public static byte[] Concat(params byte[][] input)
         {
             var stream = new MemoryStream();
-            foreach (byte[] b in input)
+            foreach (var b in input)
             {
-                stream.Write(b,0,b.Length);
+                stream.Write(b, 0, b.Length);
             }
             return stream.ToArray();
         }

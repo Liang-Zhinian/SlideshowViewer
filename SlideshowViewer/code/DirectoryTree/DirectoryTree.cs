@@ -13,6 +13,7 @@ namespace SlideshowViewer
     public class DirectoryTree
     {
         private readonly DirectoryTreeForm _form = new DirectoryTreeForm();
+        private List<PictureFile.PictureFile> _browseFiles;
         private bool _isScanning = true;
         private decimal _minFileSize;
         private decimal _modifiedAfter;
@@ -21,7 +22,6 @@ namespace SlideshowViewer
         private RootFileGroup _root;
         private int _slideshowFileIndex;
         private List<PictureFile.PictureFile> _slideshowFiles;
-        private List<PictureFile.PictureFile> _browseFiles;
 
         public DirectoryTree()
         {
@@ -157,6 +157,7 @@ namespace SlideshowViewer
                 return;
             Cursor cursor = _form.Cursor;
             _form.Cursor = Cursors.WaitCursor;
+            ThreadExecutionState.DisplayRequired();
             using (PictureViewerForm pictureViewerForm = CreatePictureViewForm())
             {
                 UpdateStatusBar();
@@ -166,6 +167,7 @@ namespace SlideshowViewer
                 _slideshowFiles = null;
             }
             _pictureViewerForm = null;
+            ThreadExecutionState.RestoreDefault();
             UpdateStatusBar();
             if (_form.Cursor == Cursors.WaitCursor)
                 _form.Cursor = cursor;
@@ -207,7 +209,8 @@ namespace SlideshowViewer
             pictureViewerForm.ShowPicture();
         }
 
-        private int PrepareFileList(IEnumerable<PictureFile.PictureFile> files, out List<PictureFile.PictureFile> pictureFiles)
+        private int PrepareFileList(IEnumerable<PictureFile.PictureFile> files,
+                                    out List<PictureFile.PictureFile> pictureFiles)
         {
             var shownFiles = new List<PictureFile.PictureFile>();
             var notShownFiles = new List<PictureFile.PictureFile>();

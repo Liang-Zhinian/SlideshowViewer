@@ -22,7 +22,7 @@ namespace SlideshowViewer.FileGroup
 
         internal override IEnumerable<FileGroup> GetNonEmptyGroups()
         {
-            var groupCount = GetGroups().Count();
+            int groupCount = GetGroups().Count();
             return base.GetNonEmptyGroups().Where(@group => groupCount != 1 || group != _files);
         }
 
@@ -35,16 +35,16 @@ namespace SlideshowViewer.FileGroup
                 };
 
             foreach (
-                var next in
+                object next in
                     Utils.MergeSorted<object>(
-                        (o, o1) => String.Compare(getName(o), getName(o1), StringComparison.Ordinal), 
+                        (o, o1) => String.Compare(getName(o), getName(o1), StringComparison.Ordinal),
                         _files.GetFilteredFiles(),
-                        GetGroups().Where(@group => group!=_files)))
+                        GetGroups().Where(@group => group != _files)))
             {
                 var @group = next as FileGroup;
                 if (@group != null)
                 {
-                    foreach (var pictureFile in @group.GetFilesRecursive())
+                    foreach (PictureFile.PictureFile pictureFile in @group.GetFilesRecursive())
                     {
                         yield return pictureFile;
                     }

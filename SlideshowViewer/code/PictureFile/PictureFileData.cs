@@ -10,7 +10,6 @@ using System.Reflection;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Windows.Media.Imaging;
-using ExifLib;
 
 namespace SlideshowViewer.PictureFile
 {
@@ -25,26 +24,11 @@ namespace SlideshowViewer.PictureFile
         private Image _image;
         private int _rotation;
 
-        private class DynamicProperty
-        {
-            private Func<string> _toString;
-
-            public DynamicProperty(Func<string> toString)
-            {
-                _toString = toString;
-            }
-
-            public override string ToString()
-            {
-                return _toString();
-            }
-        }
-
         public PictureFileData(FileInfo fileInfo)
         {
             _fileName = fileInfo.FullName;
 
-            foreach (var propertyInfo in typeof(FileInfo).GetProperties())
+            foreach (PropertyInfo propertyInfo in typeof (FileInfo).GetProperties())
             {
                 _properties["File." + propertyInfo.Name] = propertyInfo.GetMethod.Invoke(fileInfo, new object[0]);
             }
@@ -56,43 +40,45 @@ namespace SlideshowViewer.PictureFile
 
             _properties["Program.Rotation"] = new DynamicProperty(() => _rotation == 0 ? "" : _rotation.ToString());
 
-            var externalDescription = ReadExternalDescription(fileInfo);
+            string externalDescription = ReadExternalDescription(fileInfo);
             if (externalDescription != null)
                 _properties["DotDescription.Description"] = externalDescription;
 
             _properties["Description"] = new DynamicProperty(delegate
                 {
-                    var maker = Get("CameraManufacturer", "").ToString().FirstWord().Trim().ToLower();
+                    string maker = Get("CameraManufacturer", "").ToString().FirstWord().Trim().ToLower();
                     string ret = "";
-                    foreach (var propertyName in Utils.Array("Title", "Subject", "DotDescription.Description"))
+                    foreach (string propertyName in Utils.Array("Title", "Subject", "DotDescription.Description"))
                     {
-                        var s = Get(propertyName, "").ToString().Trim();
+                        string s = Get(propertyName, "").ToString().Trim();
                         if (!ret.Contains(s) && (maker.IsEmpty() || !s.ToLower().StartsWith(maker)))
                             ret += "\n" + s;
                     }
-                    return String.Join("\n",ret.SplitIntoLines().Where(s => !s.IsEmpty()));
+                    return String.Join("\n", ret.SplitIntoLines().Where(s => !s.IsEmpty()));
                 });
 
             _properties["MakeAndModel"] = new DynamicProperty(delegate
-            {
-                var maker = Get("CameraManufacturer", "").ToString().Trim();
-                var makerFirstWord = maker.FirstWord().Trim().ToLower();
-                var model = Get("CameraModel", "").ToString().Trim();
-                if (!model.ToLower().Contains(makerFirstWord))
-                    return maker + " " + model;
-                return model;
-            });
+                {
+                    string maker = Get("CameraManufacturer", "").ToString().Trim();
+                    string makerFirstWord = maker.FirstWord().Trim().ToLower();
+                    string model = Get("CameraModel", "").ToString().Trim();
+                    if (!model.ToLower().Contains(makerFirstWord))
+                        return maker + " " + model;
+                    return model;
+                });
 
 
             try
             {
-                using (var bitmapStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                using (
+                    var bitmapStream = new FileStream(fileInfo.FullName, FileMode.Open, FileAccess.Read, FileShare.Read)
+                    )
                 {
                     BitmapDecoder bitmapDecoder =
                         BitmapDecoder.Create(bitmapStream,
                                              BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
 
-                    var bitmapMetadata = (BitmapMetadata)bitmapDecoder.Frames[0].Metadata;
+                    var bitmapMetadata = (BitmapMetadata) bitmapDecoder.Frames[0].Metadata;
                     foreach (string propertyName in _propertyNames)
                     {
                         if (bitmapMetadata.ContainsQuery(propertyName))
@@ -100,15 +86,15 @@ namespace SlideshowViewer.PictureFile
                             object value = bitmapMetadata.GetQuery(propertyName);
                             if (value is FILETIME)
                             {
-                                value = ((FILETIME)value).ToDateTime();
+                                value = ((FILETIME) value).ToDateTime();
                             }
                             if (value is String[])
                             {
-                                value = String.Join(", ", (String[])value);
+                                value = String.Join(", ", (String[]) value);
                             }
                             _properties[propertyName] = value;
                         }
-                    }                    
+                    }
                 }
             }
             catch (Exception e)
@@ -116,7 +102,7 @@ namespace SlideshowViewer.PictureFile
                 Debug.WriteLine(e.ToString());
             }
 
-            var animatedGif = Image.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
+            bool animatedGif = Image.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
             ImageDuration = 0;
             if (animatedGif)
             {
@@ -126,7 +112,7 @@ namespace SlideshowViewer.PictureFile
                     byte[] times = Image.GetPropertyItem(0x5100).Value;
                     for (int i = 0; i < frameCount; ++i)
                     {
-                        int frameDuration = BitConverter.ToInt32(times, 4 * i) * 10;
+                        int frameDuration = BitConverter.ToInt32(times, 4*i)*10;
                         if (frameDuration < 50)
                             frameDuration = 50;
                         ImageDuration += frameDuration;
@@ -200,7 +186,7 @@ namespace SlideshowViewer.PictureFile
             }
             foreach (var property in _properties)
             {
-                if (property.Key.ToLower().EndsWith("."+propertyName.ToLower()))
+                if (property.Key.ToLower().EndsWith("." + propertyName.ToLower()))
                     return property;
             }
             return null;
@@ -211,7 +197,7 @@ namespace SlideshowViewer.PictureFile
             KeyValuePair<string, object>? keyValuePair = GetProperty(propertyName);
             if (keyValuePair == null)
                 return @default;
-            return ((KeyValuePair<string, object>)keyValuePair).Value;
+            return ((KeyValuePair<string, object>) keyValuePair).Value;
         }
 
         private string ReadExternalDescription(FileInfo fileInfo)
@@ -273,7 +259,7 @@ namespace SlideshowViewer.PictureFile
                     7 = Mirror horizontal and rotate 90 CW 
                     8 = Rotate 270 CW
                     */
-                    var o = Get("orientation", "1");
+                    object o = Get("orientation", "1");
                     switch (int.Parse(o.ToString()))
                     {
                         case 2:
@@ -332,6 +318,21 @@ namespace SlideshowViewer.PictureFile
                                             format);
                     }
                 }
+        }
+
+        private class DynamicProperty
+        {
+            private readonly Func<string> _toString;
+
+            public DynamicProperty(Func<string> toString)
+            {
+                _toString = toString;
+            }
+
+            public override string ToString()
+            {
+                return _toString();
+            }
         }
     }
 }

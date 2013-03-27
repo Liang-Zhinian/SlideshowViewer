@@ -8,9 +8,9 @@ namespace SlideshowViewer.FileGroup
 {
     public class FileGroup : IComparable<FileGroup>
     {
-        private SortedSet<PictureFile.PictureFile> _files = new SortedSet<PictureFile.PictureFile>();
-        private object _filesLock=new object();
+        private readonly object _filesLock = new object();
         private readonly SortedSet<FileGroup> _groups = new SortedSet<FileGroup>();
+        private SortedSet<PictureFile.PictureFile> _files = new SortedSet<PictureFile.PictureFile>();
         private Func<PictureFile.PictureFile, bool> _filter = file => true;
         private long? _numberOfFilesFiltered;
 
@@ -111,7 +111,7 @@ namespace SlideshowViewer.FileGroup
         {
             lock (_filesLock)
             {
-                SortedSet<PictureFile.PictureFile> newfiles = new SortedSet<PictureFile.PictureFile>(_files);
+                var newfiles = new SortedSet<PictureFile.PictureFile>(_files);
                 newfiles.AddAll(files);
                 _files = newfiles;
                 Changed = true;
@@ -122,7 +122,7 @@ namespace SlideshowViewer.FileGroup
         {
             lock (_filesLock)
             {
-                SortedSet<PictureFile.PictureFile> newfiles = new SortedSet<PictureFile.PictureFile>(_files);
+                var newfiles = new SortedSet<PictureFile.PictureFile>(_files);
                 newfiles.RemoveWhere(file => existingFiles.Contains(file.FileName));
                 _files = newfiles;
                 Changed = true;
@@ -159,12 +159,13 @@ namespace SlideshowViewer.FileGroup
 
         public virtual IEnumerable<PictureFile.PictureFile> GetFilesRecursive()
         {
-            foreach (var pictureFile in _files)
+            foreach (PictureFile.PictureFile pictureFile in _files)
             {
                 yield return pictureFile;
             }
 
-            foreach (var pictureFile in _groups.SelectMany(fileGroup => fileGroup.GetFilesRecursive()))
+            foreach (
+                PictureFile.PictureFile pictureFile in _groups.SelectMany(fileGroup => fileGroup.GetFilesRecursive()))
             {
                 yield return pictureFile;
             }
@@ -195,7 +196,6 @@ namespace SlideshowViewer.FileGroup
         {
             return String.Compare(Name.ToUpper(), other.Name.ToUpper(), StringComparison.Ordinal);
         }
-
 
         #endregion
     }

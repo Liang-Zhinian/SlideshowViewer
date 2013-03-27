@@ -3880,6 +3880,7 @@
 		<row><td>IDS__TargetReq_DESC_RAM</td><td>1033</td><td>The amount of RAM is not adequate for running [ProductName].</td><td>0</td><td/><td>1637972482</td></row>
 		<row><td>IDS__TargetReq_DESC_RESOLUTION</td><td>1033</td><td>The screen resolution is not adequate for running [ProductName].</td><td>0</td><td/><td>1637972482</td></row>
 		<row><td>ID_STRING1</td><td>1033</td><td/><td>0</td><td/><td>1637972482</td></row>
+		<row><td>ID_STRING2</td><td>1033</td><td>UNINST~1|Uninstall Slideshow Viewer</td><td>0</td><td/><td>-643726143</td></row>
 		<row><td>ID_STRING3</td><td>1033</td><td>Atle Slagsvold</td><td>0</td><td/><td>-1314799776</td></row>
 		<row><td>IIDS_UITEXT_FeatureUninstalled</td><td>1033</td><td>This feature will remain uninstalled.</td><td>0</td><td/><td>1637972482</td></row>
 		<row><td>NEW_STRING1</td><td>1033</td><td>ssv</td><td>0</td><td/><td>-1449020297</td></row>
@@ -3991,6 +3992,7 @@
 		<col def="S255">ISBuildSourcePath</col>
 		<col def="I2">ISIconIndex</col>
 		<row><td>ARPPRODUCTICON.exe</td><td/><td>&lt;ISProductFolder&gt;\redist\Language Independent\OS Independent\setupicon.ico</td><td>0</td></row>
+		<row><td>NewShortcut1_D5A58B89696F48CDAE57B5389AD0C66A.exe</td><td/><td>C:\Program Files (x86)\InstallShield\2012SpringLE\Redist\Language Independent\OS Independent\uninstall.ico</td><td>0</td></row>
 		<row><td>_6D239292_6D9F_4D03_993E_0DE2F7AAA252</td><td/><td>V:\Egne\CSharp\SlideshowViewer\SlideshowViewer\Resources\image-x-generic.ico</td><td>0</td></row>
 		<row><td>_AA38F2F7_6CCD_4DE1_9D1D_319F4B340266</td><td/><td>V:\Egne\CSharp\SlideshowViewer\SlideshowViewer\Resources\image-x-generic.ico</td><td>0</td></row>
 	</table>
@@ -4588,6 +4590,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="i2">InstallMode</col>
 		<row><td>FileKey1</td><td>SlideshowViewer.Primary_output</td><td/><td>atlesl_1_atle_slagsvold</td><td>2</td></row>
 		<row><td>FileKey2</td><td>SlideshowViewer.Primary_output</td><td/><td>slides_1_slideshow_viewer</td><td>2</td></row>
+		<row><td>NewShortcut1</td><td>ISX_DEFAULTCOMPONENT1</td><td/><td>slides_1_slideshow_viewer</td><td>2</td></row>
 		<row><td>_Built</td><td>SlideshowViewer.Primary_output</td><td/><td>slides_1_slideshow_viewer</td><td>2</td></row>
 	</table>
 
@@ -4674,6 +4677,7 @@ UwBpAG4AZwBsAGUASQBtAGEAZwBlAAEARQB4AHAAcgBlAHMAcwA=
 		<col def="S255">ISComments</col>
 		<col def="S255">ISShortcutName</col>
 		<col def="I4">ISAttributes</col>
+		<row><td>NewShortcut1</td><td>slides_1_slideshow_viewer</td><td>##ID_STRING2##</td><td>ISX_DEFAULTCOMPONENT1</td><td>[SystemFolder]MsiExec.exe</td><td>/x [ProductCode]</td><td/><td/><td>NewShortcut1_D5A58B89696F48CDAE57B5389AD0C66A.exe</td><td>0</td><td>1</td><td/><td/><td/><td/><td/><td/><td/><td/></row>
 		<row><td>_Built</td><td>slides_1_slideshow_viewer</td><td>##IDS_SHORTCUT_DISPLAY_NAME1##</td><td>SlideshowViewer.Primary_output</td><td>AlwaysInstall</td><td/><td/><td/><td/><td/><td>1</td><td/><td/><td/><td/><td/><td/><td/><td/></row>
 	</table>
 

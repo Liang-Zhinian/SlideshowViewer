@@ -4,7 +4,6 @@ namespace SlideshowViewer.ResumeManager
 {
     public interface IResumeManager
     {
-
         bool IsShown(PictureFile.PictureFile file);
 
         void SetToNotShown(IEnumerable<PictureFile.PictureFile> files);

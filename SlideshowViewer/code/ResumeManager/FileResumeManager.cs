@@ -24,7 +24,7 @@ namespace SlideshowViewer.ResumeManager
         public override void SetToShown(PictureFile.PictureFile pictureFile)
         {
             base.SetToShown(pictureFile);
-            File.AppendAllLines(_fileName, new[] { pictureFile.FileName.ToUpper() });
+            File.AppendAllLines(_fileName, new[] {pictureFile.FileName.ToUpper()});
         }
     }
 }

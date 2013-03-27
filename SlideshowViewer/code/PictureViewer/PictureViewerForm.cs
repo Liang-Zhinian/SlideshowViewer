@@ -244,7 +244,7 @@ namespace SlideshowViewer
                 ToggleBrowsing(Files[FileIndex]);
             if (e.KeyChar == 'i')
             {
-                InfoState = (InfoState) (((int)InfoState + 1)%Enum.GetValues(typeof (InfoState)).Length);
+                InfoState = (InfoState) (((int) InfoState + 1)%Enum.GetValues(typeof (InfoState)).Length);
                 ShowPicture();
             }
             if (e.KeyChar == 'q')

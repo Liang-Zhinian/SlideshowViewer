@@ -1,12 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
-using System.Text;
-using ExifLib;
 
 namespace SlideshowViewer.PictureFile
 {
@@ -31,8 +28,8 @@ namespace SlideshowViewer.PictureFile
         {
             get
             {
-                if (_data==null)
-                    _data=new PictureFileData(FileInfo);
+                if (_data == null)
+                    _data = new PictureFileData(FileInfo);
                 return _data;
             }
             set { _data = value; }
@@ -73,6 +70,24 @@ namespace SlideshowViewer.PictureFile
             Data.Rotation += 90;
         }
 
+        public void UnloadImage()
+        {
+            if (HasData())
+            {
+                Data.UnloadImage();
+            }
+        }
+
+        public bool HasData()
+        {
+            return _data != null;
+        }
+
+        public void LoadImage()
+        {
+            Data.LoadImage();
+        }
+
         #region Comparison
 
         public int CompareTo(PictureFile other)
@@ -109,23 +124,5 @@ namespace SlideshowViewer.PictureFile
         }
 
         #endregion
-
-        public void UnloadImage()
-        {
-            if (HasData())
-            {
-                Data.UnloadImage();
-            }
-        }
-
-        public bool HasData()
-        {
-            return _data != null;
-        }
-
-        public void LoadImage()
-        {
-            Data.LoadImage();
-        }
     }
 }
