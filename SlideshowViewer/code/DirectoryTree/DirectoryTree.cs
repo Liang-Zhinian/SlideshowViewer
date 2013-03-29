@@ -30,7 +30,7 @@ namespace SlideshowViewer
             Loop = true;
             DelayInSec = 15;
             OverlayText =
-                "{description}{nl}{dateTaken}{nl}{makeAndModel}{nl}{fullName}{nl}{index} / {total}";
+                "{description}{nl}{dateTaken}{nl}{cameraDescription}{nl}{fullName}{nl}{index} / {total}";
 
             AutoRun = true;
 

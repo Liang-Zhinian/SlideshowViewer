@@ -9,16 +9,23 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using Brushes = System.Drawing.Brushes;
 
 namespace SlideshowViewer.PictureFile
 {
     public class PictureFileData
     {
         private static readonly List<string> _propertyNames =
-            new List<string>(PropertySystemHelper.GetPropertyDefinitions());
+            new List<string>(PhotoMetadataHelper.GetPropertyDefinitions());
 
-        private readonly string _fileName;
+        private static readonly Dictionary<string, string> _additionalPropertyNames = new Dictionary<string, string>()
+            {
+                {"/app1/{ushort=0}/{ushort=34665}/{ushort=42036}","Photo.Lens"}
+            }; 
+
+        private string _fileName;
         private readonly SortedDictionary<string, object> _properties = new SortedDictionary<string, object>();
         private bool _error;
         private Image _image;
@@ -44,7 +51,7 @@ namespace SlideshowViewer.PictureFile
             if (externalDescription != null)
                 _properties["DotDescription.Description"] = externalDescription;
 
-            _properties["Description"] = new DynamicProperty(delegate
+            _properties["Formatted.Description"] = new DynamicProperty(delegate
                 {
                     string maker = Get("CameraManufacturer", "").ToString().FirstWord().Trim().ToLower();
                     string ret = "";
@@ -57,14 +64,100 @@ namespace SlideshowViewer.PictureFile
                     return String.Join("\n", ret.SplitIntoLines().Where(s => !s.IsEmpty()));
                 });
 
-            _properties["MakeAndModel"] = new DynamicProperty(delegate
+            _properties["Formatted.MakeAndModel"] = new DynamicProperty(delegate
                 {
                     string maker = Get("CameraManufacturer", "").ToString().Trim();
-                    string makerFirstWord = maker.FirstWord().Trim().ToLower();
                     string model = Get("CameraModel", "").ToString().Trim();
-                    if (!model.ToLower().Contains(makerFirstWord))
-                        return maker + " " + model;
+                    if (model.IsEmpty() || !maker.ToLower().Contains(model.FirstWord().ToLower()))
+                        return (maker + " " + model).Trim();
                     return model;
+                });
+            _properties["Formatted.CameraDescription"] = new DynamicProperty(delegate
+                {
+                    string camera = Get("Formatted.MakeAndModel", "").ToString();
+                    string lens = Get("Photo.Lens", "").ToString();
+                    if (!lens.IsEmpty())
+                    {
+                        return camera + " using lens " + lens;
+                    }
+                    return camera + lens;
+                });
+            _properties["Formatted.ExposureTime"] = new DynamicProperty(delegate
+                {
+                    string ret = "";
+                    KeyValuePair<string, object>? exposureTimeProp = GetProperty("System.Photo.ExposureTime");
+                    if (exposureTimeProp != null)
+                    {
+                        var exposureTime = (double) ((KeyValuePair<String, object>) exposureTimeProp).Value;
+                        if ((1/exposureTime)%1 == 0 && exposureTime != 1)
+                            ret += "1/" + (1/exposureTime);
+                        else
+                            ret += exposureTime;
+                        ret += " sec";
+                    }
+                    return ret;
+                });
+            _properties["Formatted.Aperture"] = new DynamicProperty(delegate
+                {
+                    string ret = "";
+                    KeyValuePair<string, object>? fNumberProp = GetProperty("System.Photo.FNumber");
+                    if (fNumberProp != null)
+                    {
+                        var fNumber = (double) ((KeyValuePair<String, object>) fNumberProp).Value;
+                        ret += "f / " + fNumber;
+                    }
+                    return ret;
+                });
+            _properties["Formatted.ISO"] = new DynamicProperty(delegate
+                {
+                    string ret = "";
+                    KeyValuePair<string, object>? isoProp = GetProperty("System.Photo.ISOSpeed");
+                    if (isoProp != null)
+                    {
+                        var iso = (ushort) ((KeyValuePair<String, object>) isoProp).Value;
+                        ret += "ISO " + iso;
+                    }
+                    return ret;
+                });
+
+            _properties["Formatted.FocalLength"] = new DynamicProperty(delegate
+                {
+                    string ret = "";
+                    KeyValuePair<string, object>? focalLengthProp = GetProperty("System.Photo.FocalLength");
+                    if (focalLengthProp != null)
+                    {
+                        var focalLength = (double) ((KeyValuePair<String, object>) focalLengthProp).Value;
+                        ret += "" + focalLength + " mm";
+                    }
+                    return ret;
+                });
+
+            _properties["Formatted.Exposure"] = new DynamicProperty(delegate
+                {
+                    string ret = "";
+                    ret += Get("Formatted.ExposureTime", "");
+                    string aperture = Get("Formatted.Aperture", "").ToString();
+                    if (!aperture.IsEmpty())
+                    {
+                        if (!ret.IsEmpty())
+                            ret += " at ";
+                        ret += aperture;
+                    }
+                    string iso = Get("Formatted.ISO", "").ToString();
+                    if (!iso.IsEmpty())
+                    {
+                        if (!ret.IsEmpty())
+                            ret += ", ";
+                        ret += iso;
+                    }
+                    string focalLength = Get("Formatted.FocalLength", "").ToString();
+                    if (!focalLength.IsEmpty())
+                    {
+                        if (!ret.IsEmpty())
+                            ret += ", ";
+                        ret += focalLength;
+                    }
+                    return ret;
                 });
 
 
@@ -84,16 +177,21 @@ namespace SlideshowViewer.PictureFile
                         if (bitmapMetadata.ContainsQuery(propertyName))
                         {
                             object value = bitmapMetadata.GetQuery(propertyName);
-                            if (value is FILETIME)
-                            {
-                                value = ((FILETIME) value).ToDateTime();
-                            }
-                            if (value is String[])
-                            {
-                                value = String.Join(", ", (String[]) value);
-                            }
-                            _properties[propertyName] = value;
+                            _properties[propertyName] = TranslateBitmapMetadataValue(value);
                         }
+                    }
+                    foreach (var entry in _additionalPropertyNames)
+                    {
+                        if (bitmapMetadata.ContainsQuery(entry.Key))
+                        {
+                            object value = bitmapMetadata.GetQuery(entry.Key);
+                            _properties[entry.Value] = TranslateBitmapMetadataValue(value);
+                        }
+                        
+                    }
+                    foreach (var entry in CaptureMetadata(bitmapMetadata, String.Empty))
+                    {
+                        Debug.WriteLine("-- "+entry.Key + ": '" + entry.Value + "'");
                     }
                 }
             }
@@ -126,6 +224,19 @@ namespace SlideshowViewer.PictureFile
             {
                 Debug.WriteLine(property.Key + ": '" + property.Value + "'");
             }
+        }
+
+        private static object TranslateBitmapMetadataValue(object value)
+        {
+            if (value is FILETIME)
+            {
+                return ((FILETIME) value).ToDateTime();
+            }
+            if (value is String[])
+            {
+                return String.Join(", ", (String[]) value);
+            }
+            return value;
         }
 
 
@@ -176,6 +287,31 @@ namespace SlideshowViewer.PictureFile
             }
         }
 
+        private Dictionary<string, object> CaptureMetadata(ImageMetadata imageMetadata, string query)
+        {
+            var ret = new Dictionary<string, object>();
+            var bitmapMetadata = imageMetadata as BitmapMetadata;
+
+            if (bitmapMetadata != null)
+            {
+                foreach (string relativeQuery in bitmapMetadata)
+                {
+                    string fullQuery = query + relativeQuery;
+                    object metadataQueryReader = bitmapMetadata.GetQuery(relativeQuery);
+                    var innerBitmapMetadata = metadataQueryReader as BitmapMetadata;
+                    if (innerBitmapMetadata != null)
+                    {
+                        ret.AddAll(CaptureMetadata(innerBitmapMetadata, fullQuery));
+                    }
+                    else if (!(metadataQueryReader is BitmapMetadataBlob))
+                    {
+                        ret[fullQuery] = metadataQueryReader;
+                    }
+                }
+            }
+            return ret;
+        }
+
 
         private KeyValuePair<string, object>? GetProperty(string propertyName)
         {
@@ -197,7 +333,7 @@ namespace SlideshowViewer.PictureFile
             KeyValuePair<string, object>? keyValuePair = GetProperty(propertyName);
             if (keyValuePair == null)
                 return @default;
-            return ((KeyValuePair<string, object>) keyValuePair).Value;
+            return ((KeyValuePair<string, object>) keyValuePair).Value??"";
         }
 
         private string ReadExternalDescription(FileInfo fileInfo)
@@ -238,6 +374,10 @@ namespace SlideshowViewer.PictureFile
                 try
                 {
                     _image = new Bitmap(_fileName);
+
+                    _properties["Image.Megapixels"] = _image.Width*_image.Height/1000000.0;
+                    _properties["Image.Width"] = _image.Width;
+                    _properties["Image.Height"] = _image.Height;
 
                     const double maxSideSize = 2000;
 

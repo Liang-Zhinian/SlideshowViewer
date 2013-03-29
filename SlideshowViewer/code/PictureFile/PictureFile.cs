@@ -4,13 +4,15 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SlideshowViewer.PictureFile
 {
     public class PictureFile : IComparable<PictureFile>
     {
         private readonly FileInfo _fileInfo;
-        private PictureFileData _data;
+        private Task<PictureFileData> _dataTask;
+        private readonly object _dataTaskLock=new object();
 
 
         static PictureFile()
@@ -28,11 +30,21 @@ namespace SlideshowViewer.PictureFile
         {
             get
             {
-                if (_data == null)
-                    _data = new PictureFileData(FileInfo);
-                return _data;
+                LoadData();
+                return _dataTask.Result;
             }
-            set { _data = value; }
+        }
+
+        private void LoadData()
+        {
+            lock (_dataTaskLock)
+            {
+                if (_dataTask == null)
+                {
+                    _dataTask = new Task<PictureFileData>(() => new PictureFileData(FileInfo));
+                    _dataTask.Start();
+                }
+            }
         }
 
         public string FileName
@@ -72,7 +84,7 @@ namespace SlideshowViewer.PictureFile
 
         public void UnloadImage()
         {
-            if (HasData())
+            if (_dataTask != null)
             {
                 Data.UnloadImage();
             }
@@ -80,12 +92,15 @@ namespace SlideshowViewer.PictureFile
 
         public bool HasData()
         {
-            return _data != null;
+            return _dataTask != null && _dataTask.IsCompleted;
         }
 
         public void LoadImage()
         {
-            Data.LoadImage();
+            if (HasData())
+                Data.LoadImage();
+            else
+                LoadData();
         }
 
         #region Comparison

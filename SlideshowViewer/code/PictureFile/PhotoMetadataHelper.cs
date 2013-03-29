@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
 namespace SlideshowViewer.PictureFile
@@ -84,7 +86,7 @@ namespace SlideshowViewer.PictureFile
         PDSIF_ISCOLUMN = 0x2,
     }
 
-    internal class PropertySystemHelper
+    internal class PhotoMetadataHelper
     {
         // Defined in PropSys.h
         // PSSTDAPI PSEnumeratePropertyDescriptions(PROPDESC_ENUMFILTER filterOn, REFIID riid, VOID** ppv);
@@ -129,5 +131,7 @@ namespace SlideshowViewer.PictureFile
                 Marshal.ReleaseComObject(propDesc);
             }
         }
+
+
     }
 }

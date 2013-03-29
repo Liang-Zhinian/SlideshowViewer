@@ -91,7 +91,7 @@
     </Compile>
     <Compile Include="code\FileGroup\RootFileGroup.cs" />
     <Compile Include="code\FileGroup\DirectoryTreeFileGroup.cs" />
-    <Compile Include="code\PictureFile\PhotoProperties.cs" />
+    <Compile Include="code\PictureFile\PhotoMetadataHelper.cs" />
     <Compile Include="code\PictureFile\PictureFileData.cs" />
     <Compile Include="code\PictureFile\PictureFile.cs" />
     <Compile Include="code\ResumeManager\DummyResumeManager.cs" />

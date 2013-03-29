@@ -39,7 +39,7 @@ namespace SlideshowViewer
             InfoState = InfoState.Template;
             OverlayTextTemplate = "{fullName}";
             InitializeComponent();
-            _preLoadTimer = new Timer(1000);
+            _preLoadTimer = new Timer(1);
             _preLoadTimer.SynchronizingObject = this;
             _preLoadTimer.Elapsed += PreLoadTimerOnElapsed;
             _preLoadTimer.AutoReset = false;
