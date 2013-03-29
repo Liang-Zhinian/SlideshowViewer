@@ -109,6 +109,14 @@ namespace SlideshowViewer
             }
         }
 
+        public static void AddAll<T>(this Queue<T> queue, IEnumerable<T> items)
+        {
+            foreach (T item in items)
+            {
+                queue.Enqueue(item);
+            }
+        }
+
         public static T Largest<T>(this IEnumerable<T> items, Comparison<T> comparer) where T : class
         {
             T largest = null;

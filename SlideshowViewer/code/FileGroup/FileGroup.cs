@@ -65,7 +65,7 @@ namespace SlideshowViewer.FileGroup
 
         #region groups
 
-        protected IEnumerable<FileGroup> GetGroups()
+        protected internal IEnumerable<FileGroup> GetGroups()
         {
             lock (_groups)
             {
@@ -159,7 +159,7 @@ namespace SlideshowViewer.FileGroup
 
         public virtual IEnumerable<PictureFile.PictureFile> GetFilesRecursive()
         {
-            foreach (PictureFile.PictureFile pictureFile in _files)
+            foreach (PictureFile.PictureFile pictureFile in GetFilteredFiles())
             {
                 yield return pictureFile;
             }
@@ -174,7 +174,7 @@ namespace SlideshowViewer.FileGroup
 
         internal IEnumerable<PictureFile.PictureFile> GetFilteredFiles()
         {
-            return GetFiles().Where(_filter);
+            return GetFiles().Where(_filter).Where(file => file.HasData());
         }
 
         public long GetNumberOfFiles()

@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 using System.Windows.Media;
@@ -15,6 +16,7 @@ using Brushes = System.Drawing.Brushes;
 
 namespace SlideshowViewer.PictureFile
 {
+   
     public class PictureFileData
     {
         private static readonly List<string> _propertyNames =
@@ -174,20 +176,11 @@ namespace SlideshowViewer.PictureFile
                     var bitmapMetadata = (BitmapMetadata) bitmapDecoder.Frames[0].Metadata;
                     foreach (string propertyName in _propertyNames)
                     {
-                        if (bitmapMetadata.ContainsQuery(propertyName))
-                        {
-                            object value = bitmapMetadata.GetQuery(propertyName);
-                            _properties[propertyName] = TranslateBitmapMetadataValue(value);
-                        }
+                        CopyMetadataToProperties(bitmapMetadata, propertyName, propertyName);
                     }
                     foreach (var entry in _additionalPropertyNames)
                     {
-                        if (bitmapMetadata.ContainsQuery(entry.Key))
-                        {
-                            object value = bitmapMetadata.GetQuery(entry.Key);
-                            _properties[entry.Value] = TranslateBitmapMetadataValue(value);
-                        }
-                        
+                        CopyMetadataToProperties(bitmapMetadata, entry.Key, entry.Value);
                     }
                     foreach (var entry in CaptureMetadata(bitmapMetadata, String.Empty))
                     {
@@ -223,6 +216,23 @@ namespace SlideshowViewer.PictureFile
             foreach (var property in _properties)
             {
                 Debug.WriteLine(property.Key + ": '" + property.Value + "'");
+            }
+        }
+
+        [HandleProcessCorruptedStateExceptions]
+        private void CopyMetadataToProperties(BitmapMetadata bitmapMetadata, string query, string propertyName)
+        {
+            try
+            {
+                if (bitmapMetadata.ContainsQuery(query))
+                {
+                    object value = bitmapMetadata.GetQuery(query);
+                    _properties[propertyName] = TranslateBitmapMetadataValue(value);
+                }
+            }
+            catch (AccessViolationException e)
+            {
+                Debug.WriteLine(e);
             }
         }
 

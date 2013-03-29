@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using SlideshowViewer.PictureFile;
 using Action = Amib.Threading.Action;
 
 namespace SlideshowViewer.FileGroup
@@ -111,8 +113,14 @@ namespace SlideshowViewer.FileGroup
                     if (_onScanningDone != null)
                         _onScanningDone();
                 }
-                var thread = new Thread(ContinousScan) {Priority = ThreadPriority.BelowNormal, IsBackground = true};
-                thread.Start();
+                {
+                    var thread = new Thread(ContinousScan) { Priority = ThreadPriority.BelowNormal, IsBackground = true };
+                    thread.Start();
+                }
+                {
+                    var thread = new Thread(ScanData) {Priority = ThreadPriority.BelowNormal, IsBackground = true};
+                    thread.Start();
+                }
             }
             catch (OperationCanceledException)
             {
@@ -132,10 +140,48 @@ namespace SlideshowViewer.FileGroup
                     while (groups.Count > 0)
                     {
                         _tokenSource.Token.ThrowIfCancellationRequested();
-                        foreach (FileGroup fileGroup in groups.Dequeue().ScanDirectories(_tokenSource.Token))
+                        groups.AddAll(groups.Dequeue().ScanDirectories(_tokenSource.Token));
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private void ScanData()
+        {
+            try
+            {
+                while (true)
+                {
+                    _tokenSource.Token.WaitHandle.WaitOne(5000);
+                    _tokenSource.Token.ThrowIfCancellationRequested();
+                    var groups = new Queue<FileGroup>();
+                    groups.Enqueue(this);
+                    while (groups.Count > 0)
+                    {
+                        _tokenSource.Token.ThrowIfCancellationRequested();
+                        var fileGroup = groups.Dequeue();
+                        foreach (var pictureFile in fileGroup.GetFiles())
                         {
-                            groups.Enqueue(fileGroup);
+                            _tokenSource.Token.ThrowIfCancellationRequested();
+                            if (!pictureFile.HasInternalDataTask())
+                            {
+                                var task = new Task<PictureFileData>(delegate
+                                    {
+                                        var pictureFileData = new PictureFileData(pictureFile.FileInfo);
+                                        pictureFileData.UnloadImage();
+                                        return pictureFileData;
+                                    });
+                                task.RunSynchronously();
+                                task.Wait(_tokenSource.Token);
+                                pictureFile.SetInternalDataTaskIfNotSet(task);
+                                Changed = true;
+                            }
+
                         }
+                        groups.AddAll(fileGroup.GetGroups());
                     }
                 }
             }

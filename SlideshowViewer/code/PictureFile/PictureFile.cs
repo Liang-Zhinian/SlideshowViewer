@@ -11,7 +11,7 @@ namespace SlideshowViewer.PictureFile
     public class PictureFile : IComparable<PictureFile>
     {
         private readonly FileInfo _fileInfo;
-        private Task<PictureFileData> _dataTask;
+        internal Task<PictureFileData> _dataTask;
         private readonly object _dataTaskLock=new object();
 
 
@@ -84,7 +84,7 @@ namespace SlideshowViewer.PictureFile
 
         public void UnloadImage()
         {
-            if (_dataTask != null)
+            if (HasInternalDataTask())
             {
                 Data.UnloadImage();
             }
@@ -92,7 +92,7 @@ namespace SlideshowViewer.PictureFile
 
         public bool HasData()
         {
-            return _dataTask != null && _dataTask.IsCompleted;
+            return HasInternalDataTask() && _dataTask.IsCompleted;
         }
 
         public void LoadImage()
@@ -139,5 +139,19 @@ namespace SlideshowViewer.PictureFile
         }
 
         #endregion
+
+        public bool HasInternalDataTask()
+        {
+            return _dataTask != null;
+        }
+
+        public void SetInternalDataTaskIfNotSet(Task<PictureFileData> task)
+        {
+            lock (_dataTaskLock)
+            {
+                if (!HasInternalDataTask())
+                    _dataTask = task;
+            }
+        }
     }
 }
