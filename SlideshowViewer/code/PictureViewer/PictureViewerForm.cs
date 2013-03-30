@@ -30,6 +30,30 @@ namespace SlideshowViewer
 
         private readonly Timer _preLoadTimer;
         private Timer _slideShowTimer;
+        
+        private const int WM_SYSCOMMAND = 0x112;
+        private const int SC_SCREENSAVE = 0xF140;
+        private const int SC_MONITORPOWER = 0xF170;
+
+
+
+        protected override void WndProc(ref Message m)
+        {
+            switch (m.Msg)
+            {
+                case WM_SYSCOMMAND:
+                    switch ((int)m.WParam)
+                    {
+                        case SC_MONITORPOWER:
+                            return;
+                        case SC_SCREENSAVE:
+                            return;
+                    }
+                    break;
+            }
+
+            base.WndProc(ref m);
+        }
 
         public PictureViewerForm()
         {
@@ -83,7 +107,7 @@ namespace SlideshowViewer
                 if ((i < FileIndex - 3 || i > FileIndex + 3))
                     pictureFile.UnloadImage();
                 if (i >= FileIndex - 1 && i <= FileIndex + 1)
-                    pictureFile.LoadImage();
+                    pictureFile.StartLoadingImage();
             }
         }
 
@@ -168,8 +192,7 @@ namespace SlideshowViewer
                     throw new ArgumentOutOfRangeException();
             }
             _preLoadTimer.Stop();
-            if (file.Data.ImageDuration == 0)
-                _preLoadTimer.Start();
+            _preLoadTimer.Start();
         }
 
         private string GetOverlayText(PictureFile.PictureFile file, string template)

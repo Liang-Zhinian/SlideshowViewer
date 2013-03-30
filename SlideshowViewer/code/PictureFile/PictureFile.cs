@@ -95,10 +95,10 @@ namespace SlideshowViewer.PictureFile
             return HasInternalDataTask() && _dataTask.IsCompleted;
         }
 
-        public void LoadImage()
+        public void StartLoadingImage()
         {
             if (HasData())
-                Data.LoadImage();
+                Data.StartLoadingImage();
             else
                 LoadData();
         }

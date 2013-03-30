@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SlideshowViewer.PictureFile;
-using Action = Amib.Threading.Action;
 
 namespace SlideshowViewer.FileGroup
 {

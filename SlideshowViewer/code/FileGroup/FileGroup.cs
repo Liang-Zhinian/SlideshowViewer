@@ -174,7 +174,7 @@ namespace SlideshowViewer.FileGroup
 
         internal IEnumerable<PictureFile.PictureFile> GetFilteredFiles()
         {
-            return GetFiles().Where(_filter).Where(file => file.HasData());
+            return GetFiles().Where(_filter);
         }
 
         public long GetNumberOfFiles()

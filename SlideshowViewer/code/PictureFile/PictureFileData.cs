@@ -10,13 +10,13 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Brushes = System.Drawing.Brushes;
 
 namespace SlideshowViewer.PictureFile
 {
-   
     public class PictureFileData
     {
         private static readonly List<string> _propertyNames =
@@ -31,6 +31,7 @@ namespace SlideshowViewer.PictureFile
         private readonly SortedDictionary<string, object> _properties = new SortedDictionary<string, object>();
         private bool _error;
         private Image _image;
+        private Task<Bitmap> _imageTask;
         private int _rotation;
 
         public PictureFileData(FileInfo fileInfo)
@@ -160,6 +161,15 @@ namespace SlideshowViewer.PictureFile
                         ret += focalLength;
                     }
                     return ret;
+                });
+            _properties["Formatted.Dimensions"] = new DynamicProperty(delegate
+                {
+                    var width = int.Parse(Get("Image.Width", 0).ToString());
+                    var height = int.Parse(Get("Image.Height", 0).ToString());
+                    var megapixels = double.Parse(Get("Image.Megapixels", 0).ToString());
+                    if (width*height == 0)
+                        return "";
+                    return String.Format("{0:n0} x {1:n0}, {2:n1} MP", width, height, megapixels);
                 });
 
 
@@ -292,7 +302,7 @@ namespace SlideshowViewer.PictureFile
         {
             get
             {
-                LoadImage();
+                FinishLoadingImage();
                 return _image;
             }
         }
@@ -373,17 +383,29 @@ namespace SlideshowViewer.PictureFile
 
         public void UnloadImage()
         {
-            if (_image != null)
-                _image.Dispose();
+            if (_imageTask != null)
+            {
+                try
+                {
+                    _imageTask.Result.Dispose();
+                }
+                catch (Exception e)
+                {
+                    Debug.WriteLine(e);
+                }
+            }
+            _imageTask = null;
             _image = null;
         }
 
-        public void LoadImage()
+        public void FinishLoadingImage()
         {
             if (_image == null)
+            {
+                StartLoadingImage();
                 try
                 {
-                    _image = new Bitmap(_fileName);
+                    _image = _imageTask.Result;
 
                     _properties["Image.Megapixels"] = _image.Width*_image.Height/1000000.0;
                     _properties["Image.Width"] = _image.Width;
@@ -468,6 +490,16 @@ namespace SlideshowViewer.PictureFile
                                             format);
                     }
                 }
+            }
+        }
+
+        public void StartLoadingImage()
+        {
+            if (_image == null && _imageTask == null)
+            {
+                _imageTask = new Task<Bitmap>(() => new Bitmap(_fileName));
+                _imageTask.Start();
+            }
         }
 
         private class DynamicProperty

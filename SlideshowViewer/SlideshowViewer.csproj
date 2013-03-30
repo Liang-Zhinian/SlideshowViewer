@@ -59,13 +59,7 @@
     <StartupObject>SlideshowViewer.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="ExifLib">
-      <HintPath>..\packages\ExifLib.1.4.3.0\lib\net40\ExifLib.dll</HintPath>
-    </Reference>
     <Reference Include="PresentationCore" />
-    <Reference Include="SmartThreadPool">
-      <HintPath>..\packages\SmartThreadPool.dll.2.2.3\lib\SmartThreadPool.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Design" />
@@ -117,6 +111,8 @@
     <Compile Include="code\Unimportant\SplashScreen.Designer.cs">
       <DependentUpon>SplashScreen.cs</DependentUpon>
     </Compile>
+    <Compile Include="SQLite.cs" />
+    <Compile Include="SQLiteAsync.cs" />
     <EmbeddedResource Include="code\DirectoryTree\DirectoryTreeForm.resx">
       <DependentUpon>DirectoryTreeForm.cs</DependentUpon>
     </EmbeddedResource>
