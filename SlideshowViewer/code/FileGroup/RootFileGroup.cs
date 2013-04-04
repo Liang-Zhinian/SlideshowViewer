@@ -117,8 +117,8 @@ namespace SlideshowViewer.FileGroup
                     thread.Start();
                 }
                 {
-                    var thread = new Thread(ScanData) {Priority = ThreadPriority.BelowNormal, IsBackground = true};
-                    thread.Start();
+                    //var thread = new Thread(ScanData) {Priority = ThreadPriority.BelowNormal, IsBackground = true};
+                    //thread.Start();
                 }
             }
             catch (OperationCanceledException)
