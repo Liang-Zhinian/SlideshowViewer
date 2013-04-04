@@ -15,6 +15,7 @@ namespace SlideshowViewer
     {
         Template,
         Hidden,
+        Details,
         Full
     }
 
@@ -181,6 +182,10 @@ namespace SlideshowViewer
                 case InfoState.Hidden:
                     pictureBox1.LowerRightText = null;
                     pictureBox1.LowerLeftText = null;
+                    break;
+                case InfoState.Details:
+                    pictureBox1.LowerRightText = lowerRightText;
+                    pictureBox1.LowerLeftText = GetOverlayText(file, "{description}{nl}{dateTaken}{nl}{cameraDescription}{nl}{exposure}{nl}{dimensions}{nl}{fullName}{nl}{index} / {total}");
                     break;
                 case InfoState.Full:
                     pictureBox1.LowerRightText = lowerRightText;

@@ -175,8 +175,7 @@ namespace SlideshowViewer.FileGroup
                                     });
                                 task.RunSynchronously();
                                 task.Wait(_tokenSource.Token);
-                                pictureFile.SetInternalDataTaskIfNotSet(task);
-                                Changed = true;
+                                pictureFile.SetInternalDataTaskIfNotSet(task);                                
                             }
 
                         }
