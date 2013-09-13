@@ -32,18 +32,20 @@ namespace SlideshowViewer
             Application.DoEvents();
             _directoryTreeForm = new DirectoryTree();
             //AddToFolderContextMenu();
-
-            ReadDefaultConfig();
-            ReadConfiguration(args);
+            var errorList=new List<string>();
+            errorList.AddRange(ReadDefaultConfig());
+            errorList.AddRange(ReadConfiguration(args));
             _root.StartScan();
             _directoryTreeForm.SetRoot(_root);
+            _directoryTreeForm.SetErrors(errorList);
             splashScreen.Dispose();
             _directoryTreeForm.Run();
         }
 
 
-        private static void ReadDefaultConfig()
+        private static IEnumerable<string> ReadDefaultConfig()
         {
+            
             string appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                                               "SSV");
             if (!Directory.Exists(appDataPath))
@@ -62,12 +64,13 @@ namespace SlideshowViewer
 ", _directoryTreeForm.Loop, _directoryTreeForm.Shuffle, _directoryTreeForm.OverlayText, _directoryTreeForm.DelayInSec,
                         _directoryTreeForm.MinFileSize);
                 }
-            ReadConfiguration(File.ReadLines(defaultConfig));
+            return ReadConfiguration(File.ReadLines(defaultConfig));
         }
 
 
-        private static void ReadConfiguration(IEnumerable<string> args)
+        private static IEnumerable<string> ReadConfiguration(IEnumerable<string> args)
         {
+            List<string> errorsList=new List<string>();
             foreach (string arg in args)
             {
                 string trimmed = arg.TrimStart();
@@ -89,7 +92,7 @@ namespace SlideshowViewer
                             break;
                         case "load":
                             if (!_root.Add(value))
-                                throw new ApplicationException("Can not load " + value);
+                                errorsList.Add("Can not load " + value);
                             break;
                         case "commandfile":
                             ReadConfiguration(File.ReadLines(value));
@@ -121,9 +124,11 @@ namespace SlideshowViewer
                 {
                     if (Path.GetFileName(arg).MatchGlob("*.ssv"))
                         ReadConfiguration(File.ReadLines(arg));
-                    else throw new ApplicationException("Can not load " + arg);
+                    else 
+                        errorsList.Add("Can not load " + arg);
                 }
             }
+            return errorsList;
         }
     }
 }

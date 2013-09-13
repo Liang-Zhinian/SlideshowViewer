@@ -451,5 +451,10 @@ namespace SlideshowViewer
         }
 
         #endregion
+
+        public void SetErrors(List<string> errorList)
+        {
+            _form.errors.Text = errorList.Aggregate((s, s1) => s +"\n"+ s1);
+        }
     }
 }

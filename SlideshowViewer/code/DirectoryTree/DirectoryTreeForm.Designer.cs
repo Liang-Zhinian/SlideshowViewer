@@ -31,6 +31,7 @@
             this.components = new System.ComponentModel.Container();
             this.panel1 = new System.Windows.Forms.Panel();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.errors = new System.Windows.Forms.Label();
             this.browse = new System.Windows.Forms.CheckBox();
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
@@ -80,6 +81,7 @@
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel1.Controls.Add(this.errors, 0, 9);
             this.tableLayoutPanel1.Controls.Add(this.browse, 0, 5);
             this.tableLayoutPanel1.Controls.Add(this.label7, 0, 6);
             this.tableLayoutPanel1.Controls.Add(this.label6, 2, 8);
@@ -111,6 +113,20 @@
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(355, 604);
             this.tableLayoutPanel1.TabIndex = 0;
+            // 
+            // errors
+            // 
+            this.errors.AutoSize = true;
+            this.tableLayoutPanel1.SetColumnSpan(this.errors, 3);
+            this.errors.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.errors.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.errors.ForeColor = System.Drawing.Color.Red;
+            this.errors.Location = new System.Drawing.Point(3, 200);
+            this.errors.Name = "errors";
+            this.errors.Size = new System.Drawing.Size(349, 404);
+            this.errors.TabIndex = 15;
+            this.errors.Text = "Slideshow Options";
+            this.errors.TextAlign = System.Drawing.ContentAlignment.BottomLeft;
             // 
             // browse
             // 
@@ -450,6 +466,7 @@
         public System.Windows.Forms.Label statusBar;
         public System.Windows.Forms.PictureBox throbber;
         internal System.Windows.Forms.Label buildDate;
+        public System.Windows.Forms.Label errors;
 
 
     }
