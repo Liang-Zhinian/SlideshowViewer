@@ -1,0 +1,131 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using SlideshowViewer.code.PictureViewer;
+
+namespace SlideshowViewer
+{
+    public abstract class MyPicture
+    {
+
+        public static MyPicture create(Image image, Rectangle bounds)
+        {
+            if (image.IsAnimated())
+                return new AnimatedMyPicture(image, bounds);
+            return new StaticMyPicture(image, bounds);
+        }
+
+        protected Bitmap RenderImage(Image image, Bitmap bitmap, bool highQuality = true)
+        {
+            using (var graphic = Graphics.FromImage(bitmap))
+            {
+                if (highQuality)
+                {
+                    graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                    graphic.SmoothingMode = SmoothingMode.HighQuality;
+                    graphic.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                    graphic.CompositingQuality = CompositingQuality.HighQuality;
+                }
+
+                var solidBrush = new SolidBrush(Color.Black);
+                var clipBounds = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+                graphic.FillRectangle(solidBrush, clipBounds);
+
+                var scaledImage = FitToRectangle(new Rectangle(0, 0, image.Width, image.Height), clipBounds);
+                graphic.DrawImage(image, scaledImage);
+            }
+            return bitmap;
+        }
+
+        private static Rectangle FitToRectangle(Rectangle inner, Rectangle outer)
+        {
+            double scaleY = (double) inner.Height/outer.Height;
+            double scaleX = (double) inner.Width/outer.Width;
+            double scale = scaleX > scaleY ? scaleX : scaleY;
+            var scaledImage = new Rectangle(0, 0, (int) Math.Round(inner.Width/scale),
+                (int) Math.Round(inner.Height/scale));
+            scaledImage.Y = (int) Math.Round(((double) outer.Height - scaledImage.Height)/2);
+            scaledImage.X = (int) Math.Round(((double) outer.Width - scaledImage.Width)/2);
+            return scaledImage;
+        }
+
+        public abstract Image GetRenderedImage();
+
+        public abstract bool StartAnimate();
+
+    }
+
+    internal class StaticMyPicture : MyPicture
+    {
+        private Bitmap _renderImage;
+
+        internal StaticMyPicture(Image image, Rectangle bounds)
+        {
+            _renderImage = RenderImage(image, new Bitmap(bounds.Width, bounds.Height));
+        }
+
+        public override Image GetRenderedImage()
+        {
+            return _renderImage;
+        }
+
+        public override bool StartAnimate()
+        {
+            return false;
+        }
+    }
+
+    internal class AnimatedMyPicture : MyPicture
+    {
+        private Rectangle _bounds;
+        private List<Bitmap> _image = new List<Bitmap>();
+        private List<ImageFrame> _imageFrames;
+        private Stopwatch _stopwatch;
+        
+        protected internal AnimatedMyPicture(Image image, Rectangle bounds)
+        {
+            _bounds = bounds;
+            _imageFrames = image.GetFrames();
+            foreach (var imageFrame in _imageFrames)
+            {
+                _image.Add(null);
+            }
+        }
+
+        private int GetIndex()
+        {
+            if (_stopwatch == null)
+                return 0;
+
+            long counter = 0;
+            for (int i = 0;;)
+            {
+                if (counter + _imageFrames[i].Duration >= _stopwatch.ElapsedMilliseconds)
+                {
+                    return i;
+                }
+                counter += _imageFrames[i].Duration;
+                i = (i + 1) % _imageFrames.Count;
+            }
+        }
+
+        public override Image GetRenderedImage()
+        {
+            var index = GetIndex();
+            if (_image[index] == null)
+                _image[index] = RenderImage(_imageFrames[index].ActivateFrame(),
+                    new Bitmap(_bounds.Width, _bounds.Height),false);
+
+            return _image[index];
+        }
+
+        public override bool StartAnimate()
+        {
+            _stopwatch = Stopwatch.StartNew();
+            return true;
+        }
+    }
+}

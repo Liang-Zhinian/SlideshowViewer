@@ -1,20 +1,54 @@
-﻿using System.Drawing;
+﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Drawing.Text;
 using System.Windows.Forms;
 
 namespace SlideshowViewer
 {
-    public class MyPictureBox : PictureBox
+    public class MyPictureBox : Control, ISupportInitialize
     {
         private string _lowerLeftText;
         private string _lowerMiddleText;
         private string _lowerRightText;
+        private MyPicture _image;
+        private MyPicture _nextImage;
+        private Stopwatch _stopwatch=Stopwatch.StartNew();
+        private Timer _transitionTimer;
+        private float _transitionTime=5000f;
 
         public MyPictureBox()
         {
             OverlayAlpha = 100;
             OverlayFont = DefaultFont;
+            SetStyle(
+            ControlStyles.UserPaint |
+            ControlStyles.AllPaintingInWmPaint |
+            ControlStyles.OptimizedDoubleBuffer, true);
+            SetStyle(ControlStyles.Selectable, false);
+            _transitionTimer = new Timer();
+            _transitionTimer.Tick += (o, args) => Invalidate();
+            _transitionTimer.Interval = 1;
+        }
+
+        public void SetImage(Image image)
+        {
+            _image = MyPicture.create(image, Bounds);
+            _nextImage = null;
+            _transitionTimer.Enabled = _image.StartAnimate();
+            Invalidate();
+        }
+
+        public void TransitionImage(Image image, float transitionTime)
+        {
+            _nextImage=MyPicture.create(image, Bounds);
+            _stopwatch = Stopwatch.StartNew();
+            _transitionTimer.Enabled = true;
+            this._transitionTime = transitionTime;
+            Invalidate();
         }
 
         public string LowerMiddleText
@@ -53,17 +87,39 @@ namespace SlideshowViewer
 
         public bool HighQuality { get; set; }
 
+
         protected override void OnPaint(PaintEventArgs pe)
         {
             Graphics graphic = pe.Graphics;
-            if (HighQuality)
+
+            if (_nextImage != null)
             {
-                graphic.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                graphic.SmoothingMode = SmoothingMode.HighQuality;
-                graphic.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                graphic.CompositingQuality = CompositingQuality.HighQuality;
+                var elapsedMilliseconds = _stopwatch.ElapsedMilliseconds;
+                if (elapsedMilliseconds > _transitionTime)
+                {
+                    _image = _nextImage;
+                    _nextImage = null;
+                    _transitionTimer.Enabled = _image.StartAnimate();
+                    graphic.DrawImageUnscaled(_image.GetRenderedImage(), 0, 0);
+                }
+                else
+                {
+                    graphic.DrawImageUnscaled(_image.GetRenderedImage(), 0, 0);
+
+                    var imageAttributes = new ImageAttributes();
+                    imageAttributes.SetColorMatrix(new ColorMatrix {Matrix33 = elapsedMilliseconds/_transitionTime});
+                    var renderedImage = _nextImage.GetRenderedImage();
+                    var bounds = new Rectangle(0, 0, renderedImage.Width, renderedImage.Height);
+                    graphic.DrawImage(renderedImage, bounds, 0, 0, bounds.Width, bounds.Height, GraphicsUnit.Pixel,
+                        imageAttributes);
+                }
             }
-            base.OnPaint(pe);
+            else
+            {
+                graphic.DrawImageUnscaled(_image.GetRenderedImage(), 0, 0);                
+            }
+
+
             graphic.TextRenderingHint = TextRenderingHint.ClearTypeGridFit;
 
             if (LowerLeftText != null)
@@ -98,5 +154,15 @@ namespace SlideshowViewer
         }
 
         private delegate PointF PlaceText(RectangleF rect);
+
+        public void BeginInit()
+        {
+            
+        }
+
+        public void EndInit()
+        {
+            
+        }
     }
 }

@@ -13,6 +13,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using SlideshowViewer.code.PictureViewer;
 using Brushes = System.Drawing.Brushes;
 
 namespace SlideshowViewer.PictureFile
@@ -203,22 +204,11 @@ namespace SlideshowViewer.PictureFile
                 Debug.WriteLine(e.ToString());
             }
 
-            bool animatedGif = Image.FrameDimensionsList.Any(guid => guid == FrameDimension.Time.Guid);
-            ImageDuration = 0;
-            if (animatedGif)
+            ImageDuration = Image.GetFrames().Sum(frame => frame.Duration);
+
+            foreach (var imageFrame in Image.GetFrames())
             {
-                int frameCount = Image.GetFrameCount(FrameDimension.Time);
-                if (frameCount > 1)
-                {
-                    byte[] times = Image.GetPropertyItem(0x5100).Value;
-                    for (int i = 0; i < frameCount; ++i)
-                    {
-                        int frameDuration = BitConverter.ToInt32(times, 4*i)*10;
-                        if (frameDuration < 50)
-                            frameDuration = 50;
-                        ImageDuration += frameDuration;
-                    }
-                }
+                Debug.WriteLine(imageFrame.Duration);
             }
 
             _properties["Program.ImageDuration"] = new DynamicProperty(() => ImageDuration.ToString());

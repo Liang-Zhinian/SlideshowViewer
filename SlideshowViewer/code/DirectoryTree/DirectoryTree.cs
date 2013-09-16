@@ -29,6 +29,7 @@ namespace SlideshowViewer
             Shuffle = true;
             Loop = true;
             DelayInSec = 15;
+            TransitionTime = 2000;
             OverlayText =
                 "{description}{nl}{dateTaken}{nl}{cameraDescription}{nl}{fullName}{nl}{index} / {total}";
 
@@ -177,6 +178,7 @@ namespace SlideshowViewer
         private void SetupForm(PictureViewerForm pictureViewerForm, PictureFile.PictureFile startFile)
         {
             _pictureViewerForm.Loop = Loop;
+            _pictureViewerForm.TransitionTime = TransitionTime;
             _pictureViewerForm.DelayInSec = DelayInSec;
             _pictureViewerForm.OverlayTextTemplate = OverlayText;
             if (Browse)
@@ -208,6 +210,8 @@ namespace SlideshowViewer
             pictureViewerForm.Browsing = Browse;
             pictureViewerForm.ShowPicture();
         }
+
+        public float TransitionTime { get; set; }
 
         private int PrepareFileList(IEnumerable<PictureFile.PictureFile> files,
                                     out List<PictureFile.PictureFile> pictureFiles)
@@ -454,7 +458,7 @@ namespace SlideshowViewer
 
         public void SetErrors(List<string> errorList)
         {
-            _form.errors.Text = errorList.Aggregate((s, s1) => s +"\n"+ s1);
+            _form.errors.Text = errorList.Any()?errorList.Aggregate((s, s1) => s +"\n"+ s1):"";
         }
     }
 }

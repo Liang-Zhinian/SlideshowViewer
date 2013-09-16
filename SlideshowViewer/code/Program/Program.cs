@@ -61,8 +61,9 @@ namespace SlideshowViewer
 # text={2}
 # delay={3}
 # minSize={4}
+# transition={5}
 ", _directoryTreeForm.Loop, _directoryTreeForm.Shuffle, _directoryTreeForm.OverlayText, _directoryTreeForm.DelayInSec,
-                        _directoryTreeForm.MinFileSize);
+                        _directoryTreeForm.MinFileSize,(Int64)_directoryTreeForm.TransitionTime);
                 }
             return ReadConfiguration(File.ReadLines(defaultConfig));
         }
@@ -99,6 +100,9 @@ namespace SlideshowViewer
                             break;
                         case "text":
                             _directoryTreeForm.OverlayText = value;
+                            break;
+                        case "transition":
+                            _directoryTreeForm.TransitionTime = Convert.ToInt64(value);
                             break;
                         case "shuffle":
                             _directoryTreeForm.Shuffle = Convert.ToBoolean(value);

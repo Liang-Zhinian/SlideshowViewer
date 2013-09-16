@@ -113,7 +113,7 @@ namespace SlideshowViewer
         }
 
 
-        internal void ShowPicture()
+        internal void ShowPicture(bool transition=false)
         {
             if (FileIndex >= Files.Count)
             {
@@ -147,13 +147,24 @@ namespace SlideshowViewer
             int imageDuration = file.Data.ImageDuration;
 
             pictureBox1.HighQuality = imageDuration == 0;
-            pictureBox1.Image = bitmap;
+
+            decimal interval = Math.Max(DelayInSec * 1000, imageDuration + imageDuration / 2);
+            if (interval == 0)
+                interval = 1;
+            
+            if (transition)
+            {
+                pictureBox1.TransitionImage(bitmap,TransitionTime);
+                interval += (decimal) TransitionTime;
+            }
+            else
+            {
+                pictureBox1.SetImage(bitmap);
+            }
+
             string lowerRightText = null;
 
             StopSlideShowTimer();
-            decimal interval = Math.Max(DelayInSec*1000, imageDuration + imageDuration/2);
-            if (interval == 0)
-                interval = 1;
             if (!Browsing)
             {
                 if (!Paused)
@@ -199,6 +210,8 @@ namespace SlideshowViewer
             _preLoadTimer.Stop();
             _preLoadTimer.Start();
         }
+
+        public float TransitionTime { get; set; }
 
         private string GetOverlayText(PictureFile.PictureFile file, string template)
         {
@@ -334,7 +347,10 @@ namespace SlideshowViewer
         private void SlideShowTimerOnElapsed(object sender, ElapsedEventArgs elapsedEventArgs)
         {
             if (sender == _slideShowTimer)
-                NextPicture();
+            {
+                FileIndex++;
+                ShowPicture(true);                
+            }
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
