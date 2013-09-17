@@ -93,6 +93,7 @@ namespace SlideshowViewer
             {
                 _image.Add(null);
             }
+            RenderImage(0, true);
         }
 
         private int GetIndex()
@@ -116,10 +117,26 @@ namespace SlideshowViewer
         {
             var index = GetIndex();
             if (_image[index] == null)
-                _image[index] = RenderImage(_imageFrames[index].ActivateFrame(),
-                    new Bitmap(_bounds.Width, _bounds.Height),false);
+                RenderImage(index);
+            else
+            {
+                for (int i = 0; i < _image.Count; i++)
+                {
+                    if (_image[i] == null)
+                    {
+                        RenderImage(i);
+                        break;
+                    }
+                }
+            }
 
             return _image[index];
+        }
+
+        private void RenderImage(int index, bool highQuality=false)
+        {
+            _image[index] = RenderImage(_imageFrames[index].ActivateFrame(),
+                new Bitmap(_bounds.Width, _bounds.Height), highQuality);
         }
 
         public override bool StartAnimate()
