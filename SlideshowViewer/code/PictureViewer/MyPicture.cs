@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
+using System.Linq;
 using SlideshowViewer.code.PictureViewer;
 
 namespace SlideshowViewer
@@ -81,19 +82,16 @@ namespace SlideshowViewer
     internal class AnimatedMyPicture : MyPicture
     {
         private Rectangle _bounds;
-        private List<Bitmap> _image = new List<Bitmap>();
+        private List<Bitmap> _image;
         private List<ImageFrame> _imageFrames;
         private Stopwatch _stopwatch;
+        private int prevIndex = 0;
         
         protected internal AnimatedMyPicture(Image image, Rectangle bounds)
         {
             _bounds = bounds;
             _imageFrames = image.GetFrames();
-            foreach (var imageFrame in _imageFrames)
-            {
-                _image.Add(null);
-            }
-            RenderImage(0, true);
+            _image=new List<Bitmap>(_imageFrames.Select(frame => (Bitmap)null));
         }
 
         private int GetIndex()
@@ -109,8 +107,13 @@ namespace SlideshowViewer
                     return i;
                 }
                 counter += _imageFrames[i].Duration;
-                i = (i + 1) % _imageFrames.Count;
+                i = GetIndex(i + 1);
             }
+        }
+
+        private int GetIndex(int i)
+        {
+            return i%_imageFrames.Count;
         }
 
         public override Image GetRenderedImage()
@@ -118,9 +121,9 @@ namespace SlideshowViewer
             var index = GetIndex();
             if (_image[index] == null)
                 RenderImage(index);
-            else
+            else if (index==prevIndex)
             {
-                for (int i = 0; i < _image.Count; i++)
+                for (int i = GetIndex(index+1); i != index; i=GetIndex(i+1))
                 {
                     if (_image[i] == null)
                     {
@@ -129,7 +132,7 @@ namespace SlideshowViewer
                     }
                 }
             }
-
+            prevIndex = index;
             return _image[index];
         }
 
