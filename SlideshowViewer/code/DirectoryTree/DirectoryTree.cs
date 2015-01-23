@@ -177,10 +177,10 @@ namespace SlideshowViewer
 
         private void SetupForm(PictureViewerForm pictureViewerForm, PictureFile.PictureFile startFile)
         {
-            _pictureViewerForm.Loop = Loop;
-            _pictureViewerForm.TransitionTime = TransitionTime;
-            _pictureViewerForm.DelayInSec = DelayInSec;
-            _pictureViewerForm.OverlayTextTemplate = OverlayText;
+            pictureViewerForm.Loop = Loop;
+            pictureViewerForm.TransitionTime = TransitionTime;
+            pictureViewerForm.DelayInSec = DelayInSec;
+            pictureViewerForm.OverlayTextTemplate = OverlayText;
             if (Browse)
             {
                 if (!pictureViewerForm.Browsing)

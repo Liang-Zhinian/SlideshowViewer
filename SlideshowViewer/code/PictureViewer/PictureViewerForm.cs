@@ -69,9 +69,9 @@ namespace SlideshowViewer
             _preLoadTimer.Elapsed += PreLoadTimerOnElapsed;
             _preLoadTimer.AutoReset = false;
 
-            WindowState = FormWindowState.Normal;
-            FormBorderStyle = FormBorderStyle.None;
-            Bounds = Screen.PrimaryScreen.Bounds;
+            this.TopMost = true;
+            this.FormBorderStyle = FormBorderStyle.None;
+            this.WindowState = FormWindowState.Maximized; 
             pictureBox1.MouseEnter += (o, args) => Cursor.Hide();
             pictureBox1.MouseLeave += (o, args) => Cursor.Show();
         }
@@ -115,6 +115,10 @@ namespace SlideshowViewer
 
         internal void ShowPicture(bool transition=false)
         {
+            if (Files == null)
+            {
+                return;
+            }
             if (FileIndex >= Files.Count)
             {
                 if (Loop)
@@ -254,6 +258,7 @@ namespace SlideshowViewer
             _slideShowTimer.Start();
         }
 
+
         protected override void OnKeyDown(KeyEventArgs e)
         {
             switch (e.KeyCode)
@@ -361,6 +366,12 @@ namespace SlideshowViewer
             {
                 pictureFile.UnloadImage();
             }
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            ShowPicture();
         }
     }
 }
